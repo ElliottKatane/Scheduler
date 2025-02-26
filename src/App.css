@@ -1,0 +1,38 @@
+table {
+  border-collapse: collapse; /* Cette ligne évite l'espace entre les cellules. Elle fusionne les bordures */
+  table-layout: fixed; /* Cette ligne force des colonnes de taille égale */
+  width: 100%;
+  user-select: none; /*Empêche la sélection du texte*/
+}
+thead {
+  border: 2px solid lightblue; /* en-tête */
+}
+th {
+  border: 1px solid lightblue; /*premiere colonne (heures) + traits verticaux de la 1e ligne (nom des jours) */
+}
+
+td {
+  border: 1px solid lightblue; /* colonnes verticales des cases vides */
+}
+.timeSlotHour {
+  height: 70px;
+}
+.timeSlotHour:hover {
+  background-color: green;
+}
+/* App.css */
+.slot {
+  cursor: pointer;
+  width: 100px;
+  height: 40px;
+  border: 1px solid #ccc;
+  user-select: none;
+}
+
+.slot.selected {
+  background-color: lightgreen;
+}
+
+.slot:hover {
+  background-color: lightgray;
+}
