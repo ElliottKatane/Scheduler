@@ -15,6 +15,6 @@ export const TIME_SLOTS: Array<string> = Array.from(
   { length: 22 - 6 + 1 }, // plage horaire 6h 22h
   (_, index) => {
     const hour = index + 6;
-    return formatHoursInferiorTo10(hour) + "h00";
+    return formatHoursInferiorTo10(hour);
   }
 );

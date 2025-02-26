@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface Activity {
   name: string;
@@ -7,10 +7,21 @@ interface Activity {
 }
 
 const ManageActivities = () => {
-  const [activities, setActivities] = useState<Activity[]>([]);
+  // initialisation du useState avec localStorage
+  const [activities, setActivities] = useState<Activity[]>(() => {
+    const storedActivities = localStorage.getItem("activities");
+    return storedActivities ? JSON.parse(storedActivities) : [];
+  });
   const [newActivity, setNewActivity] = useState({ name: "", color: "" });
 
+  // sauvegarder les activités dans le localStorage quand elles changent
+  useEffect(() => {
+    localStorage.setItem("activities", JSON.stringify(activities));
+  }, [activities]);
+
   const handleAddActivity = () => {
+    if (!newActivity.name.trim() || !newActivity.color) return;
+
     const activity = {
       name: newActivity.name,
       color: newActivity.color,

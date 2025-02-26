@@ -1,3 +1,6 @@
+.container-main {
+  border: 1px solid red;
+}
 table {
   border-collapse: collapse; /* Cette ligne évite l'espace entre les cellules. Elle fusionne les bordures */
   table-layout: fixed; /* Cette ligne force des colonnes de taille égale */

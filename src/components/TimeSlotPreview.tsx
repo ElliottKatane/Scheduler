@@ -2,7 +2,7 @@ import { WEEK_DAYS } from "../constants";
 import ManageActivities from "./ManageActivities";
 
 interface TimeSlotPreviewProps {
-  selectedSlots: { day: string; startHour: string; endHour: string }[];
+  selectedSlots: { day: string; startHour: number; endHour: number }[];
 }
 
 const TimeSlotPreview: React.FC<TimeSlotPreviewProps> = ({ selectedSlots }) => {
