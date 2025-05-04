@@ -1,31 +1,97 @@
 import { WEEK_DAYS } from "../constants";
-import ManageActivities from "./ManageActivities";
+import { useContext, useState } from "react";
+import { ActivityContext } from "../context/ActivityContext";
+import { TimeSlotPreviewProps } from "../types";
 
-interface TimeSlotPreviewProps {
-  selectedSlots: Set<string>; // Acceptation de Set<string> au lieu de tableau
-}
-
-const TimeSlotPreview: React.FC<TimeSlotPreviewProps> = ({ selectedSlots }) => {
-  const formattedSlots = Array.from(selectedSlots).map((slotId) => {
-    const [hour, day] = slotId.split("-");
-    return {
-      day: WEEK_DAYS[parseInt(day, 10)],
-      startHour: parseInt(hour, 10),
-      endHour: parseInt(hour, 10) + 1, // Supposition : chaque créneau dure 1h
-    };
-  });
+const TimeSlotPreview: React.FC<TimeSlotPreviewProps> = ({
+  selectedSlots,
+  selectedActivityId,
+  setSelectedActivityId,
+  onAssignActivity,
+  error,
+  pendingAssignment,
+  conflictingSlots,
+  onForceReplace,
+  onClearAndAssign,
+  hasConflicts,
+}) => {
+  const { activities } = useContext(ActivityContext)!;
+  const formattedSlots = Array.from(selectedSlots)
+    .map((slotId) => {
+      const [hour, day] = slotId.split("-");
+      return {
+        slotId,
+        dayIndex: parseInt(day, 10),
+        hour: parseInt(hour, 10),
+        day: WEEK_DAYS[parseInt(day, 10)],
+        startHour: parseInt(hour, 10),
+        endHour: parseInt(hour, 10) + 1,
+      };
+    })
+    .sort((a, b) => {
+      if (a.dayIndex !== b.dayIndex) return a.dayIndex - b.dayIndex;
+      return a.hour - b.hour;
+    });
 
   return (
     <div>
       <h4>Selected Slots</h4>
       <ul>
-        {formattedSlots.map((slot, index) => (
-          <li key={index}>
+        {formattedSlots.map((slot) => (
+          <li key={slot.slotId}>
             {slot.day} : {slot.startHour}h - {slot.endHour}h
           </li>
         ))}
       </ul>
-      <button>Faire une nouvelle sélection</button>
+      {selectedSlots.size > 0 && (
+        <>
+          <label>
+            Associer à une activité :
+            <select
+              value={selectedActivityId}
+              onChange={(e) => setSelectedActivityId(e.target.value)}
+            >
+              <option value="">-- Choisir une activité --</option>
+              {activities.map((act) => (
+                <option key={act.id} value={act.id}>
+                  {act.name}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <button
+            onClick={() => {
+              if (selectedActivityId) {
+                onAssignActivity(selectedActivityId);
+                setSelectedActivityId("");
+              }
+            }}
+            disabled={!selectedActivityId}
+          >
+            Valider
+          </button>
+          {hasConflicts && (
+            <div className="conflict-options">
+              <p>
+                ⚠️ {conflictingSlots.length} créneau(x) déjà occupé(s) dans
+                votre sélection :<br />
+                {conflictingSlots.join(", ")}
+              </p>
+
+              <button onClick={onClearAndAssign}>
+                1) Effacer toutes les activités de la sélection
+              </button>
+
+              <button onClick={onForceReplace}>
+                2) Remplacer les existantes et remplir les cases vides
+              </button>
+            </div>
+          )}
+
+          {error && <p style={{ color: "red" }}>{error}</p>}
+        </>
+      )}
     </div>
   );
 };

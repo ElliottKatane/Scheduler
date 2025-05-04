@@ -1,10 +1,5 @@
 import { useEffect, useState } from "react";
-
-interface Activity {
-  name: string;
-  color: string;
-  id: string;
-}
+import { Activity } from "../types";
 
 const ManageActivities = () => {
   const [activities, setActivities] = useState<Activity[]>(() => {
