@@ -56,33 +56,38 @@ const ManageActivities = () => {
 
   return (
     <div className="manage-activities">
-      <h3>{editingId ? "Modifier une activité" : "Ajouter une activité"}</h3>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleAddOrUpdateActivity();
+        }}
+      >
+        <label>
+          Nom :
+          <input
+            type="text"
+            value={newActivity.name}
+            onChange={(e) =>
+              setNewActivity({ ...newActivity, name: e.target.value })
+            }
+          />
+        </label>
 
-      <label>
-        Nom :
-        <input
-          type="text"
-          value={newActivity.name}
-          onChange={(e) =>
-            setNewActivity({ ...newActivity, name: e.target.value })
-          }
-        />
-      </label>
+        <label>
+          Couleur :
+          <input
+            type="color"
+            value={newActivity.color}
+            onChange={(e) =>
+              setNewActivity({ ...newActivity, color: e.target.value })
+            }
+          />
+        </label>
 
-      <label>
-        Couleur :
-        <input
-          type="color"
-          value={newActivity.color}
-          onChange={(e) =>
-            setNewActivity({ ...newActivity, color: e.target.value })
-          }
-        />
-      </label>
-
-      <button onClick={handleAddOrUpdateActivity}>
-        {editingId ? "Modifier" : "Ajouter"} l’activité
-      </button>
+        <button type="submit">
+          {editingId ? "Modifier" : "Ajouter"} l’activité
+        </button>
+      </form>
 
       <h4>Activités enregistrées</h4>
       <ul>

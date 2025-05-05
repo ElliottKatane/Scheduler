@@ -2,6 +2,7 @@ import { WEEK_DAYS } from "../constants";
 import { useContext, useState } from "react";
 import { ActivityContext } from "../context/ActivityContext";
 import { TimeSlotPreviewProps } from "../types";
+import CreateActivityModal from "./CreateActivityModal";
 
 const TimeSlotPreview: React.FC<TimeSlotPreviewProps> = ({
   selectedSlots,
@@ -15,7 +16,8 @@ const TimeSlotPreview: React.FC<TimeSlotPreviewProps> = ({
   hasConflicts,
   onResetSelection,
 }) => {
-  const { activities } = useContext(ActivityContext)!;
+  const [isCreating, setIsCreating] = useState(false);
+  const { activities, addActivity } = useContext(ActivityContext)!;
   const formattedSlots = Array.from(selectedSlots)
     .map((slotId) => {
       const [hour, day] = slotId.split("-");
@@ -49,7 +51,15 @@ const TimeSlotPreview: React.FC<TimeSlotPreviewProps> = ({
             Associer à une activité :
             <select
               value={selectedActivityId}
-              onChange={(e) => setSelectedActivityId(e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value;
+
+                if (value === "__new__") {
+                  setIsCreating(true);
+                } else {
+                  setSelectedActivityId(value);
+                }
+              }}
             >
               <option value="">-- Choisir une activité --</option>
               {activities.map((act) => (
@@ -57,6 +67,7 @@ const TimeSlotPreview: React.FC<TimeSlotPreviewProps> = ({
                   {act.name}
                 </option>
               ))}
+              <option value="__new__">+ Créer une nouvelle activité...</option>
             </select>
           </label>
 
@@ -97,6 +108,17 @@ const TimeSlotPreview: React.FC<TimeSlotPreviewProps> = ({
           <button onClick={onResetSelection}>Réinitialiser la sélection</button>
           {/* le reste du menu déroulant et des boutons */}
         </>
+      )}
+      {isCreating && (
+        <CreateActivityModal
+          onClose={() => setIsCreating(false)}
+          onCreate={(activity) => {
+            addActivity(activity);
+            setSelectedActivityId(activity.id);
+            setIsCreating(false);
+            onAssignActivity(activity.id); // Ajoute directement dans l'emploi du temps
+          }}
+        />
       )}
     </div>
   );
