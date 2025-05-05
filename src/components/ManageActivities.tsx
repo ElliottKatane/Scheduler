@@ -1,11 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
 import { Activity } from "../types";
+import { ActivityContext } from "../context/ActivityContext";
 
 const ManageActivities = () => {
-  const [activities, setActivities] = useState<Activity[]>(() => {
-    const storedActivities = localStorage.getItem("activities");
-    return storedActivities ? JSON.parse(storedActivities) : [];
-  });
+  const context = useContext(ActivityContext);
+  if (!context) return null;
+
+  const { activities, addActivity, updateActivity, deleteActivity } = context;
 
   const [newActivity, setNewActivity] = useState({ name: "", color: "" });
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -18,21 +19,18 @@ const ManageActivities = () => {
     if (!newActivity.name.trim() || !newActivity.color) return;
 
     if (editingId) {
-      setActivities((prev) =>
-        prev.map((act) =>
-          act.id === editingId
-            ? { ...act, name: newActivity.name, color: newActivity.color }
-            : act
-        )
-      );
-      setEditingId(null);
-    } else {
-      const newAct = {
+      updateActivity({
+        id: editingId,
         name: newActivity.name,
         color: newActivity.color,
+      });
+      setEditingId(null);
+    } else {
+      addActivity({
         id: crypto.randomUUID(),
-      };
-      setActivities((prev) => [...prev, newAct]);
+        name: newActivity.name,
+        color: newActivity.color,
+      });
     }
 
     setNewActivity({ name: "", color: "" });
@@ -44,7 +42,7 @@ const ManageActivities = () => {
         "Supprimer cette activité ? Cela supprimera aussi les heures associées."
       )
     ) {
-      setActivities((prev) => prev.filter((act) => act.id !== id));
+      deleteActivity(id);
     }
   };
 

@@ -103,6 +103,21 @@ function App() {
     });
   }, [activities]);
 
+  // Surveiller les activités supprimées ou modifiées
+  // et nettoyer les créneaux correspondants
+  // (par exemple, si une activité est supprimée, on veut supprimer les créneaux associés)
+  // et si une activité est modifiée, on veut mettre à jour les créneaux associés
+  useEffect(() => {
+    setSlotToActivityMap((prev) => {
+      const newMap = new Map(
+        Array.from(prev.entries()).filter(([_, activityId]) =>
+          activities.some((a) => a.id === activityId)
+        )
+      );
+      return newMap;
+    });
+  }, [activities]);
+
   return (
     <section>
       <Navbar onTabChange={setActiveTab} />
