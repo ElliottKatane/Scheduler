@@ -9,11 +9,11 @@ const TimeSlotPreview: React.FC<TimeSlotPreviewProps> = ({
   setSelectedActivityId,
   onAssignActivity,
   error,
-  pendingAssignment,
   conflictingSlots,
   onForceReplace,
   onClearAndAssign,
   hasConflicts,
+  onResetSelection,
 }) => {
   const { activities } = useContext(ActivityContext)!;
   const formattedSlots = Array.from(selectedSlots)
@@ -90,6 +90,12 @@ const TimeSlotPreview: React.FC<TimeSlotPreviewProps> = ({
           )}
 
           {error && <p style={{ color: "red" }}>{error}</p>}
+        </>
+      )}
+      {selectedSlots.size > 0 && (
+        <>
+          <button onClick={onResetSelection}>Réinitialiser la sélection</button>
+          {/* le reste du menu déroulant et des boutons */}
         </>
       )}
     </div>

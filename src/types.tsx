@@ -6,6 +6,7 @@ export interface Activity {
 export interface TimeSlotPreviewProps {
   selectedSlots: Set<string>;
   selectedActivityId: string;
+  onResetSelection: () => void;
   setSelectedActivityId: (id: string) => void;
   onAssignActivity: (activityId: string) => void;
   error?: string | null;

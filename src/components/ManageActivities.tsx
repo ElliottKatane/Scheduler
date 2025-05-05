@@ -39,7 +39,11 @@ const ManageActivities = () => {
   };
 
   const handleDelete = (id: string) => {
-    if (confirm("Supprimer cette activité ?")) {
+    if (
+      confirm(
+        "Supprimer cette activité ? Cela supprimera aussi les heures associées."
+      )
+    ) {
       setActivities((prev) => prev.filter((act) => act.id !== id));
     }
   };

@@ -91,6 +91,18 @@ function App() {
     }
   }, [selectedSlots, selectedActivityId, slotToActivityMap]);
 
+  // Nettoyer les créneaux dont l'activité a été supprimée
+  useEffect(() => {
+    setSlotToActivityMap((prev) => {
+      const newMap = new Map(
+        Array.from(prev.entries()).filter(([_, activityId]) =>
+          activities.some((a) => a.id === activityId)
+        )
+      );
+      return newMap;
+    });
+  }, [activities]);
+
   return (
     <section>
       <Navbar onTabChange={setActiveTab} />
@@ -154,12 +166,17 @@ function App() {
                   selectedSlots.forEach((slotId) => newMap.delete(slotId));
                   return newMap;
                 });
-                if (pendingAssignment) applyAssignment(pendingAssignment);
+                clearSelection();
+                setError(null);
+                setPendingAssignment(null);
+                setConflictingSlots([]);
+                setSelectedActivityId("");
               }}
               onForceReplace={() => {
                 if (pendingAssignment) applyAssignment(pendingAssignment);
               }}
               hasConflicts={hasConflicts}
+              onResetSelection={clearSelection}
             />
           </>
         )}
