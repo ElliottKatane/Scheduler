@@ -1,5 +1,4 @@
 import { useEffect, useState, useContext } from "react";
-import { Activity } from "../types";
 import { ActivityContext } from "../context/ActivityContext";
 
 const ManageActivities = () => {

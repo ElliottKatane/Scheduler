@@ -7,6 +7,7 @@ import Navbar from "./UI/Navbar";
 import "./App.css";
 import { ActivityContext } from "./context/ActivityContext";
 import SavedSchedules from "./components/SavedSchedules";
+import { SavedSchedule } from "./types";
 
 function App() {
   const activityContext = useContext(ActivityContext);
@@ -42,7 +43,8 @@ function App() {
   );
   const [hasConflicts, setHasConflicts] = useState(false);
   const [conflictingSlots, setConflictingSlots] = useState<string[]>([]);
-
+  const [newSavedSchedule, setNewSavedSchedule] =
+    useState<SavedSchedule | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   // Function to handle assignment of an activity to selected slots
@@ -194,6 +196,28 @@ function App() {
               hasConflicts={hasConflicts}
               onResetSelection={clearSelection}
             />
+            <button
+              onClick={() => {
+                const name = prompt("Nom de l'emploi du temps :");
+                if (!name) return;
+
+                const newSchedule: SavedSchedule = {
+                  id: crypto.randomUUID(),
+                  name,
+                  data: Array.from(slotToActivityMap.entries()),
+                };
+
+                const saved = localStorage.getItem("schedules");
+                const parsed = saved ? JSON.parse(saved) : [];
+                const updated = [...parsed, newSchedule];
+                localStorage.setItem("schedules", JSON.stringify(updated));
+
+                setNewSavedSchedule(newSchedule); // 👈 envoie à SavedSchedules
+                alert("Emploi du temps sauvegardé !");
+              }}
+            >
+              Sauvegarder cet emploi du temps
+            </button>
           </>
         )}
 
@@ -206,6 +230,7 @@ function App() {
               setSlotToActivityMap(new Map(map));
               clearSelection();
             }}
+            newSchedule={newSavedSchedule}
           />
         )}
       </div>

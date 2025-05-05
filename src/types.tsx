@@ -19,5 +19,5 @@ export interface TimeSlotPreviewProps {
 export interface SavedSchedule {
   id: string;
   name: string;
-  data: Map<string, string>; // slotToActivityMap
+  data: [string, string][]; // slotToActivityMap
 }

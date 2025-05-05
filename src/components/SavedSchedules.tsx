@@ -1,21 +1,30 @@
-import { useContext, useState, useEffect } from "react";
-import { ActivityContext } from "../context/ActivityContext";
+import { useState, useEffect } from "react";
 import ScheduleSnippet from "./ScheduleSnippet";
 import { Activity, SavedSchedule } from "../types";
 
 interface Props {
   activities: Activity[];
-  onLoad: (map: Map<string, string>) => void; // ✅ ICI
+  onLoad: (map: Map<string, string>) => void;
+  newSchedule?: SavedSchedule | null;
 }
 
-const SavedSchedules: React.FC<Props> = ({ activities, onLoad }) => {
+const SavedSchedules: React.FC<Props> = ({
+  activities,
+  onLoad,
+  newSchedule,
+}) => {
   const [schedules, setSchedules] = useState<SavedSchedule[]>([]);
 
   // Load from localStorage
   useEffect(() => {
     const saved = localStorage.getItem("schedules");
     if (saved) {
-      setSchedules(JSON.parse(saved));
+      const parsed = JSON.parse(saved);
+      const restored = parsed.map((s: any) => ({
+        ...s,
+        data: new Map(s.data), // ✅ reconstruction du Map
+      }));
+      setSchedules(restored);
     }
   }, []);
 
@@ -23,13 +32,18 @@ const SavedSchedules: React.FC<Props> = ({ activities, onLoad }) => {
   useEffect(() => {
     localStorage.setItem("schedules", JSON.stringify(schedules));
   }, [schedules]);
+  useEffect(() => {
+    if (newSchedule) {
+      setSchedules((prev) => [...prev, newSchedule]);
+    }
+  }, [newSchedule]);
 
   const handleAddNew = () => {
     const name = prompt("Nom de l'emploi du temps :") || "Sans nom";
     const newSchedule: SavedSchedule = {
       id: crypto.randomUUID(),
       name,
-      data: new Map(),
+      data: [],
     };
     setSchedules((prev) => [...prev, newSchedule]);
   };
@@ -48,9 +62,9 @@ const SavedSchedules: React.FC<Props> = ({ activities, onLoad }) => {
           <div key={s.id}>
             <ScheduleSnippet
               title={s.name}
-              slotToActivityMap={s.data}
+              slotToActivityMap={new Map(s.data)} // ✅ on reconstruit la Map ici
               activities={activities}
-              onClick={() => onLoad(s.data)}
+              onClick={() => onLoad(new Map(s.data))}
             />
             <button onClick={() => handleDelete(s.id)}>Supprimer</button>
           </div>
