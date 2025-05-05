@@ -16,3 +16,8 @@ export interface TimeSlotPreviewProps {
   onClearAndAssign: () => void;
   hasConflicts: boolean;
 }
+export interface SavedSchedule {
+  id: string;
+  name: string;
+  data: Map<string, string>; // slotToActivityMap
+}

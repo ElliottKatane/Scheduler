@@ -6,6 +6,7 @@ import ManageActivities from "./components/ManageActivities";
 import Navbar from "./UI/Navbar";
 import "./App.css";
 import { ActivityContext } from "./context/ActivityContext";
+import SavedSchedules from "./components/SavedSchedules";
 
 function App() {
   const activityContext = useContext(ActivityContext);
@@ -199,9 +200,13 @@ function App() {
         {activeTab === "Gérer les activités" && <ManageActivities />}
 
         {activeTab === "Mes emplois du temps" && (
-          <p>
-            Fonctionnalité à venir : gestion des emplois du temps sauvegardés.
-          </p>
+          <SavedSchedules
+            activities={activities}
+            onLoad={(map) => {
+              setSlotToActivityMap(new Map(map));
+              clearSelection();
+            }}
+          />
         )}
       </div>
     </section>
