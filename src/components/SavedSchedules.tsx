@@ -6,12 +6,14 @@ interface Props {
   activities: Activity[];
   onLoad: (map: Map<string, string>) => void;
   newSchedule?: SavedSchedule | null;
+  onCreateNewRequest?: () => void;
 }
 
 const SavedSchedules: React.FC<Props> = ({
   activities,
   onLoad,
   newSchedule,
+  onCreateNewRequest,
 }) => {
   const [schedules, setSchedules] = useState<SavedSchedule[]>([]);
 
@@ -22,7 +24,7 @@ const SavedSchedules: React.FC<Props> = ({
       const parsed = JSON.parse(saved);
       const restored = parsed.map((s: any) => ({
         ...s,
-        data: new Map(s.data), // ✅ reconstruction du Map
+        data: new Map(s.data),
       }));
       setSchedules(restored);
     }
@@ -37,16 +39,6 @@ const SavedSchedules: React.FC<Props> = ({
       setSchedules((prev) => [...prev, newSchedule]);
     }
   }, [newSchedule]);
-
-  const handleAddNew = () => {
-    const name = prompt("Nom de l'emploi du temps :") || "Sans nom";
-    const newSchedule: SavedSchedule = {
-      id: crypto.randomUUID(),
-      name,
-      data: [],
-    };
-    setSchedules((prev) => [...prev, newSchedule]);
-  };
 
   const handleDelete = (id: string) => {
     if (confirm("Supprimer cet emploi du temps ?")) {
@@ -70,11 +62,13 @@ const SavedSchedules: React.FC<Props> = ({
           </div>
         ))}
 
-        <div className="snippet-new" onClick={handleAddNew}>
-          <div className="slot-mini" style={{ backgroundColor: "#eee" }}>
-            +
-          </div>
-          <p>Nouvel emploi du temps</p>
+        <div className="snippet-new">
+          <div className="slot-mini">+</div>
+          <button
+            onClick={() => onCreateNewRequest?.()} // ✅ redirige sans créer
+          >
+            Nouvel emploi du temps
+          </button>
         </div>
       </div>
     </div>

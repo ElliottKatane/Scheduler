@@ -7,6 +7,7 @@ import Navbar from "./UI/Navbar";
 import "./App.css";
 import { ActivityContext } from "./context/ActivityContext";
 import SavedSchedules from "./components/SavedSchedules";
+import LocalStorageViewer from "./components/LocalStorageViewer";
 import { SavedSchedule } from "./types";
 
 function App() {
@@ -231,8 +232,10 @@ function App() {
               clearSelection();
             }}
             newSchedule={newSavedSchedule}
+            onCreateNewRequest={() => setActiveTab("Emploi du temps")} // redirige
           />
         )}
+        {activeTab === "Debug" && <LocalStorageViewer />}
       </div>
     </section>
   );
