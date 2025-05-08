@@ -38,13 +38,18 @@ const TimeSlotPreview: React.FC<TimeSlotPreviewProps> = ({
   return (
     <div>
       <h4>Selected Slots</h4>
-      <ul>
-        {formattedSlots.map((slot) => (
-          <li key={slot.slotId}>
-            {slot.day} : {slot.startHour}h - {slot.endHour}h
-          </li>
-        ))}
-      </ul>
+      <div
+        style={{ maxHeight: "100px", overflowY: "auto", marginBottom: "1rem" }}
+      >
+        <ul>
+          {formattedSlots.map((slot) => (
+            <li key={slot.slotId}>
+              {slot.day} : {slot.startHour}h - {slot.endHour}h
+            </li>
+          ))}
+        </ul>
+      </div>
+
       {selectedSlots.size > 0 && (
         <>
           <label>

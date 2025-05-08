@@ -37,6 +37,7 @@ function App() {
     }
     return new Map();
   });
+
   useEffect(() => {
     const serialized = JSON.stringify(Array.from(slotToActivityMap.entries()));
     localStorage.setItem("slotToActivityMap", serialized);
@@ -217,6 +218,24 @@ function App() {
             </button>
           </>
         )}
+        <button
+          onClick={() => {
+            if (
+              confirm(
+                "Voulez-vous vraiment réinitialiser tout l'emploi du temps ?"
+              )
+            ) {
+              setSlotToActivityMap(new Map());
+              clearSelection();
+              setSelectedActivityId("");
+              setPendingAssignment(null);
+              setConflictingSlots([]);
+              setHasConflicts(false);
+            }
+          }}
+        >
+          Nettoyer l'emploi du temps
+        </button>
 
         {activeTab === "Gérer les activités" && <ManageActivities />}
 
