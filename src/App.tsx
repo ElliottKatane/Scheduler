@@ -9,6 +9,7 @@ import { ActivityContext } from "./context/ActivityContext";
 import SavedSchedules from "./components/SavedSchedules";
 import LocalStorageViewer from "./components/LocalStorageViewer";
 import { SavedSchedule } from "./types";
+import { useSavedSchedules } from "./hooks/useSavedSchedules";
 
 function App() {
   const activityContext = useContext(ActivityContext);
@@ -16,6 +17,8 @@ function App() {
   const [selectedActivityId, setSelectedActivityId] = useState<string>("");
 
   const { activities } = activityContext;
+  const { addSchedule } = useSavedSchedules();
+
   // tr : ligne. donc pour avoir les horaires en ligne, il faut mapper les slotHours dans des <tr>
   const { handleMouseDown, handleMouseEnter, selectedSlots, clearSelection } =
     useSelection();
@@ -44,8 +47,7 @@ function App() {
   );
   const [hasConflicts, setHasConflicts] = useState(false);
   const [conflictingSlots, setConflictingSlots] = useState<string[]>([]);
-  const [newSavedSchedule, setNewSavedSchedule] =
-    useState<SavedSchedule | null>(null);
+
   const [error, setError] = useState<string | null>(null);
 
   // Function to handle assignment of an activity to selected slots
@@ -207,13 +209,7 @@ function App() {
                   name,
                   data: Array.from(slotToActivityMap.entries()),
                 };
-
-                const saved = localStorage.getItem("schedules");
-                const parsed = saved ? JSON.parse(saved) : [];
-                const updated = [...parsed, newSchedule];
-                localStorage.setItem("schedules", JSON.stringify(updated));
-
-                setNewSavedSchedule(newSchedule); // 👈 envoie à SavedSchedules
+                addSchedule(newSchedule);
                 alert("Emploi du temps sauvegardé !");
               }}
             >
@@ -229,12 +225,15 @@ function App() {
             activities={activities}
             onLoad={(map) => {
               setSlotToActivityMap(new Map(map));
-              clearSelection();
+              setSelectedActivityId("");
+              setPendingAssignment(null);
+              setConflictingSlots([]);
+              setHasConflicts(false);
             }}
-            newSchedule={newSavedSchedule}
-            onCreateNewRequest={() => setActiveTab("Emploi du temps")} // redirige
+            onCreateNewRequest={() => setActiveTab("Emploi du temps")}
           />
         )}
+
         {activeTab === "Debug" && <LocalStorageViewer />}
       </div>
     </section>
