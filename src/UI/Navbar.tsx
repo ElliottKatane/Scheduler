@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import "./Navbar.css"; // tu peux aussi utiliser Tailwind si tu préfères
+import "../CSS/Navbar.css";
 
 interface NavbarProps {
   onTabChange?: (tab: string) => void;

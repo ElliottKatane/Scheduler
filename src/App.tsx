@@ -230,7 +230,6 @@ function App() {
               setConflictingSlots([]);
               setHasConflicts(false);
             }}
-            onCreateNewRequest={() => setActiveTab("Emploi du temps")}
           />
         )}
 

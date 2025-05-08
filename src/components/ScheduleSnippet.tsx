@@ -1,4 +1,5 @@
 import { WEEK_DAYS, TIME_SLOTS } from "../constants";
+import "../CSS/ScheduleSnippet.css";
 
 interface Props {
   slotToActivityMap: Map<string, string>;

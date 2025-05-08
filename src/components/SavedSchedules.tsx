@@ -1,18 +1,14 @@
 import ScheduleSnippet from "./ScheduleSnippet";
 import { Activity } from "../types";
 import { useSavedSchedules } from "../hooks/useSavedSchedules";
+import "../CSS/SavedSchedules.css";
 
 interface Props {
   activities: Activity[];
   onLoad: (map: Map<string, string>) => void;
-  onCreateNewRequest?: () => void;
 }
 
-const SavedSchedules: React.FC<Props> = ({
-  activities,
-  onLoad,
-  onCreateNewRequest,
-}) => {
+const SavedSchedules: React.FC<Props> = ({ activities, onLoad }) => {
   const { schedules, deleteSchedule } = useSavedSchedules();
 
   return (
@@ -20,9 +16,10 @@ const SavedSchedules: React.FC<Props> = ({
       <h3>Mes emplois du temps sauvegardés</h3>
       <div className="snippet-grid">
         {schedules.map((s) => (
-          <div key={s.id}>
+          <div key={s.id} className="snippet-card">
+            <h4>{s.name}</h4>
             <ScheduleSnippet
-              title={s.name}
+              title=""
               slotToActivityMap={new Map(s.data)}
               activities={activities}
               onClick={() => onLoad(new Map(s.data))}
@@ -30,13 +27,6 @@ const SavedSchedules: React.FC<Props> = ({
             <button onClick={() => deleteSchedule(s.id)}>Supprimer</button>
           </div>
         ))}
-
-        <div className="snippet-new">
-          <div className="slot-mini">+</div>
-          <button onClick={() => onCreateNewRequest?.()}>
-            Nouvel emploi du temps
-          </button>
-        </div>
       </div>
     </div>
   );
