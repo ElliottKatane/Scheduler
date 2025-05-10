@@ -1,10 +1,12 @@
 import { createContext, useState, useEffect, ReactNode } from "react";
 import { SavedSchedule } from "../types";
+import { useContext } from "react";
 
 interface SavedSchedulesContextType {
   schedules: SavedSchedule[];
   addSchedule: (schedule: SavedSchedule) => void;
   deleteSchedule: (id: string) => void;
+  updateSchedule: (id: string, data: Map<string, string>) => void; // ← CORRECTION ICI
 }
 
 export const SavedSchedulesContext =
@@ -50,11 +52,29 @@ export const SavedSchedulesProvider = ({
     setSchedules((prev) => prev.filter((s) => s.id !== id));
   };
 
+  const updateSchedule = (id: string, data: Map<string, string>) => {
+    setSchedules((prev) =>
+      prev.map((s) =>
+        s.id === id ? { ...s, data: Array.from(data.entries()) } : s
+      )
+    );
+  };
+
   return (
     <SavedSchedulesContext.Provider
-      value={{ schedules, addSchedule, deleteSchedule }}
+      value={{ schedules, addSchedule, deleteSchedule, updateSchedule }}
     >
       {children}
     </SavedSchedulesContext.Provider>
   );
 };
+
+export function useSavedSchedules() {
+  const context = useContext(SavedSchedulesContext);
+  if (!context) {
+    throw new Error(
+      "useSavedSchedules must be used within a SavedSchedulesProvider"
+    );
+  }
+  return context;
+}

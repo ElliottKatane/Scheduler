@@ -2,14 +2,15 @@ import { useState, useContext, useEffect } from "react";
 import { TIME_SLOTS, WEEK_DAYS } from "./constants";
 import { useSelection } from "./hooks/useSelection";
 import TimeSlotPreview from "./components/TimeSlotPreview";
-import ManageActivities from "./components/ManageActivities";
+import ManageActivities from "./pages/ManageActivities";
 import Navbar from "./UI/Navbar";
 import "./App.css";
 import { ActivityContext } from "./context/ActivityContext";
-import SavedSchedules from "./components/SavedSchedules";
-import LocalStorageViewer from "./components/LocalStorageViewer";
-import { SavedSchedule } from "./types";
-import { useSavedSchedules } from "./hooks/useSavedSchedules";
+import SavedSchedules from "./pages/SavedSchedules";
+import LocalStorageViewer from "./pages/LocalStorageViewer";
+import { useCurrentSchedule } from "./context/CurrentScheduleContext";
+import { useSavedSchedules } from "./context/SavedSchedulesContext";
+import ScheduleActions from "./components/ScheduleActions";
 
 function App() {
   const activityContext = useContext(ActivityContext);
@@ -17,11 +18,12 @@ function App() {
   const [selectedActivityId, setSelectedActivityId] = useState<string>("");
 
   const { activities } = activityContext;
-  const { addSchedule } = useSavedSchedules();
+  const { schedules } = useSavedSchedules(); // pour comparer avec les emplois sauvegardés
 
   // tr : ligne. donc pour avoir les horaires en ligne, il faut mapper les slotHours dans des <tr>
   const { handleMouseDown, handleMouseEnter, selectedSlots, clearSelection } =
     useSelection();
+  const { currentSchedule, setCurrentSchedule } = useCurrentSchedule();
   const [activeTab, setActiveTab] = useState("Emploi du temps");
   const [slotToActivityMap, setSlotToActivityMap] = useState<
     Map<string, string>
@@ -37,6 +39,28 @@ function App() {
     }
     return new Map();
   });
+  // On essaie de retrouver un emploi du temps qui correspond exactement
+  useEffect(() => {
+    if (slotToActivityMap.size === 0 || schedules.length === 0) return;
+
+    // On essaie de retrouver un emploi du temps qui correspond exactement
+    for (const schedule of schedules) {
+      const savedMap = new Map(schedule.data);
+      let isSame = savedMap.size === slotToActivityMap.size;
+      if (isSame) {
+        for (const [key, value] of savedMap) {
+          if (slotToActivityMap.get(key) !== value) {
+            isSame = false;
+            break;
+          }
+        }
+      }
+      if (isSame) {
+        setCurrentSchedule(schedule);
+        break;
+      }
+    }
+  }, [slotToActivityMap, schedules]);
 
   useEffect(() => {
     const serialized = JSON.stringify(Array.from(slotToActivityMap.entries()));
@@ -132,48 +156,50 @@ function App() {
       <div className="container-main">
         {activeTab === "Emploi du temps" && (
           <>
-            <table>
-              <thead>
-                <tr>
-                  <th>Heures/jour</th>
-                  {WEEK_DAYS.map((day, dayIndex) => (
-                    <th key={dayIndex}>{day}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {TIME_SLOTS.map((slot, index) => (
-                  <tr key={index}>
-                    <th>{slot < 10 ? "0" + slot : slot}h</th>
-                    {WEEK_DAYS.map((_, idx) => {
-                      const slotId = `${slot}-${idx}`;
-                      const activityId = slotToActivityMap.get(slotId);
-                      const activity = activities.find(
-                        (a) => a.id === activityId
-                      );
-
-                      return (
-                        <td
-                          key={idx}
-                          id={slotId}
-                          className={`timeSlotHour slot ${
-                            selectedSlots.has(slotId) ? "selected" : ""
-                          }`}
-                          onMouseDown={handleMouseDown}
-                          onMouseEnter={handleMouseEnter}
-                          style={{
-                            backgroundColor: activity?.color || undefined,
-                            color: activity ? "#000" : undefined, // temporaire, à améliorer plus tard
-                          }}
-                        >
-                          {activity?.name || ""}
-                        </td>
-                      );
-                    })}
+            <div id="emploi-du-temps-export">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Heures/jour</th>
+                    {WEEK_DAYS.map((day, dayIndex) => (
+                      <th key={dayIndex}>{day}</th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {TIME_SLOTS.map((slot, index) => (
+                    <tr key={index}>
+                      <th>{slot < 10 ? "0" + slot : slot}h</th>
+                      {WEEK_DAYS.map((_, idx) => {
+                        const slotId = `${slot}-${idx}`;
+                        const activityId = slotToActivityMap.get(slotId);
+                        const activity = activities.find(
+                          (a) => a.id === activityId
+                        );
+
+                        return (
+                          <td
+                            key={idx}
+                            id={slotId}
+                            className={`timeSlotHour slot ${
+                              selectedSlots.has(slotId) ? "selected" : ""
+                            }`}
+                            onMouseDown={handleMouseDown}
+                            onMouseEnter={handleMouseEnter}
+                            style={{
+                              backgroundColor: activity?.color || undefined,
+                              color: activity ? "#000" : undefined, // temporaire, à améliorer plus tard
+                            }}
+                          >
+                            {activity?.name || ""}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
             <TimeSlotPreview
               selectedSlots={selectedSlots}
               selectedActivityId={selectedActivityId}
@@ -200,50 +226,31 @@ function App() {
               hasConflicts={hasConflicts}
               onResetSelection={clearSelection}
             />
-            <button
-              onClick={() => {
-                const name = prompt("Nom de l'emploi du temps :");
-                if (!name) return;
-
-                const newSchedule: SavedSchedule = {
-                  id: crypto.randomUUID(),
-                  name,
-                  data: Array.from(slotToActivityMap.entries()),
-                };
-                addSchedule(newSchedule);
-                alert("Emploi du temps sauvegardé !");
-              }}
-            >
-              Sauvegarder cet emploi du temps
-            </button>
+            <ScheduleActions
+              slotToActivityMap={slotToActivityMap}
+              clearSelection={clearSelection}
+              setSlotToActivityMap={setSlotToActivityMap}
+              setSelectedActivityId={setSelectedActivityId}
+              setPendingAssignment={setPendingAssignment}
+              setConflictingSlots={setConflictingSlots}
+              setHasConflicts={setHasConflicts}
+            />
           </>
         )}
-        <button
-          onClick={() => {
-            if (
-              confirm(
-                "Voulez-vous vraiment réinitialiser tout l'emploi du temps ?"
-              )
-            ) {
-              setSlotToActivityMap(new Map());
-              clearSelection();
-              setSelectedActivityId("");
-              setPendingAssignment(null);
-              setConflictingSlots([]);
-              setHasConflicts(false);
-            }
-          }}
-        >
-          Nettoyer l'emploi du temps
-        </button>
 
         {activeTab === "Gérer les activités" && <ManageActivities />}
 
         {activeTab === "Mes emplois du temps" && (
           <SavedSchedules
             activities={activities}
-            onLoad={(map) => {
-              setSlotToActivityMap(new Map(map));
+            onLoad={(mapData, scheduleId, scheduleName) => {
+              const asMap = new Map(mapData);
+              setCurrentSchedule({
+                id: scheduleId,
+                name: scheduleName,
+                data: mapData,
+              });
+              setSlotToActivityMap(asMap);
               setSelectedActivityId("");
               setPendingAssignment(null);
               setConflictingSlots([]);
@@ -254,6 +261,14 @@ function App() {
 
         {activeTab === "Debug" && <LocalStorageViewer />}
       </div>
+      {currentSchedule && (
+        <div className="current-schedule-info">
+          <p>
+            <strong>Édition :</strong> {currentSchedule.name}
+          </p>
+          <p>ID : {currentSchedule.id}</p>
+        </div>
+      )}
     </section>
   );
 }

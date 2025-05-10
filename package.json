@@ -13,6 +13,7 @@
     "@tailwindcss/postcss": "^4.1.5",
     "@tailwindcss/vite": "^4.1.5",
     "crypto": "^1.0.1",
+    "html2pdf.js": "^0.10.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "tailwindcss": "^4.1.5"
