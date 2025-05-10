@@ -1,8 +1,11 @@
+import { useState } from "react";
+import { createPortal } from "react-dom";
+import html2pdf from "html2pdf.js";
 import ScheduleSnippet from "../components/ScheduleSnippet";
-import { Activity } from "../types";
+import ScheduleExportPreview from "../components/ScheduleExportPreview";
+import { Activity, SavedSchedule } from "../types";
 import { useSavedSchedules } from "../context/SavedSchedulesContext";
 import "../CSS/SavedSchedules.css";
-import html2pdf from "html2pdf.js";
 
 interface Props {
   activities: Activity[];
@@ -11,20 +14,39 @@ interface Props {
 
 const SavedSchedules: React.FC<Props> = ({ activities, onLoad }) => {
   const { schedules, deleteSchedule } = useSavedSchedules();
+  const [renderedExport, setRenderedExport] = useState<React.ReactNode | null>(
+    null
+  );
+  const handleExport = (s: SavedSchedule) => {
+    const map = new Map(s.data);
 
-  const exportToPDF = (id: string, name: string) => {
-    const element = document.getElementById(`pdf-${id}`);
-    if (!element) return;
+    // Inject the export component invisibly into the DOM
+    setRenderedExport(
+      <div style={{ display: "none" }}>
+        <ScheduleExportPreview
+          slotToActivityMap={map}
+          activities={activities}
+        />
+      </div>
+    );
 
-    const opt = {
-      margin: 0.5,
-      filename: `${name}.pdf`,
-      image: { type: "jpeg", quality: 0.98 },
-      html2canvas: { scale: 2 },
-      jsPDF: { unit: "in", format: "letter", orientation: "portrait" },
-    };
-
-    html2pdf().set(opt).from(element).save();
+    // Laisse le temps au DOM de se mettre à jour, puis exporte
+    setTimeout(() => {
+      const element = document.getElementById("full-export");
+      if (element) {
+        html2pdf()
+          .from(element)
+          .set({
+            margin: 0.5,
+            filename: `${s.name}.pdf`,
+            image: { type: "jpeg", quality: 0.98 },
+            html2canvas: { scale: 2 },
+            jsPDF: { unit: "in", format: "a4", orientation: "landscape" },
+          })
+          .save()
+          .then(() => setRenderedExport(null)); // Clean up
+      }
+    }, 100);
   };
 
   return (
@@ -35,28 +57,27 @@ const SavedSchedules: React.FC<Props> = ({ activities, onLoad }) => {
           <div key={s.id} className="snippet-card">
             <h4>{s.name}</h4>
 
-            {/* Zone cible pour export PDF */}
-            <div id={`pdf-${s.id}`}>
-              <ScheduleSnippet
-                title=""
-                slotToActivityMap={new Map(s.data)}
-                activities={activities}
-                onClick={() => onLoad(s.data, s.id, s.name)}
-              />
-            </div>
+            <ScheduleSnippet
+              title=""
+              slotToActivityMap={new Map(s.data)}
+              activities={activities}
+              onClick={() => onLoad(s.data, s.id, s.name)}
+            />
 
-            {/* Boutons */}
             <div
               style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem" }}
             >
               <button onClick={() => deleteSchedule(s.id)}>Supprimer</button>
-              <button onClick={() => exportToPDF(s.id, s.name)}>
-                Exporter en PDF
-              </button>
+              <button onClick={() => handleExport(s)}>Exporter en PDF</button>
             </div>
           </div>
         ))}
       </div>
+      {renderedExport &&
+        createPortal(
+          renderedExport,
+          document.getElementById("export-container")!
+        )}
     </div>
   );
 };

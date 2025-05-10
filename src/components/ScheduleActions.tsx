@@ -29,7 +29,9 @@ const ScheduleActions: React.FC<Props> = ({
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   useEffect(() => {
-    currentSchedule && hasChanges(slotToActivityMap);
+    const unsaved = currentSchedule !== null && hasChanges(slotToActivityMap);
+    alert("[DEBUG] hasUnsavedChanges:" + unsaved);
+    setHasUnsavedChanges(unsaved);
   }, [slotToActivityMap, currentSchedule]);
 
   const handleClear = () => {
@@ -68,9 +70,7 @@ const ScheduleActions: React.FC<Props> = ({
 
   return (
     <div style={{ marginTop: "1rem" }}>
-      <button onClick={handleSaveNew}>
-        Sauvegarder un nouvel emploi du temps
-      </button>
+      <button onClick={handleSaveNew}>Save as... </button>
       {currentSchedule && hasUnsavedChanges && (
         <button onClick={handleUpdateExisting}>
           Mettre à jour cet emploi du temps
@@ -89,7 +89,7 @@ const ScheduleActions: React.FC<Props> = ({
             setHasConflicts(false);
           }}
         >
-          Créer un nouvel emploi du temps
+          New Schedule
         </button>
       )}
     </div>
