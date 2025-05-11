@@ -30,7 +30,6 @@ const ScheduleActions: React.FC<Props> = ({
 
   useEffect(() => {
     const unsaved = currentSchedule !== null && hasChanges(slotToActivityMap);
-    alert("[DEBUG] hasUnsavedChanges:" + unsaved);
     setHasUnsavedChanges(unsaved);
   }, [slotToActivityMap, currentSchedule]);
 
