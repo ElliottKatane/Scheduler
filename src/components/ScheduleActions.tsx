@@ -2,6 +2,7 @@ import { SavedSchedule } from "../types";
 import { useEffect, useState } from "react";
 import { useSavedSchedules } from "../context/SavedSchedulesContext";
 import { useCurrentSchedule } from "../context/CurrentScheduleContext";
+import "../CSS/ScheduleActions.css"; // ajoute ça en haut
 
 interface Props {
   slotToActivityMap: Map<string, string>;
@@ -68,29 +69,31 @@ const ScheduleActions: React.FC<Props> = ({
   };
 
   return (
-    <div style={{ marginTop: "1rem" }}>
-      <button onClick={handleSaveNew}>Save as... </button>
-      {currentSchedule && hasUnsavedChanges && (
-        <button onClick={handleUpdateExisting}>
-          Mettre à jour cet emploi du temps
-        </button>
-      )}
-      <button onClick={handleClear}>Nettoyer l'emploi du temps</button>
-      {!hasUnsavedChanges && (
-        <button
-          onClick={() => {
-            setCurrentSchedule(null); //
-            setSlotToActivityMap(new Map());
-            clearSelection();
-            setSelectedActivityId("");
-            setPendingAssignment(null);
-            setConflictingSlots([]);
-            setHasConflicts(false);
-          }}
-        >
-          New Schedule
-        </button>
-      )}
+    <div className="schedule-actions">
+      <div className="action-group">
+        <button onClick={handleSaveNew}>Save as...</button>
+        {currentSchedule && hasUnsavedChanges && (
+          <button onClick={handleUpdateExisting}>
+            Mettre à jour cet emploi du temps
+          </button>
+        )}
+        <button onClick={handleClear}>Nettoyer l'emploi du temps</button>
+        {!hasUnsavedChanges && (
+          <button
+            onClick={() => {
+              setCurrentSchedule(null);
+              setSlotToActivityMap(new Map());
+              clearSelection();
+              setSelectedActivityId("");
+              setPendingAssignment(null);
+              setConflictingSlots([]);
+              setHasConflicts(false);
+            }}
+          >
+            New Schedule
+          </button>
+        )}
+      </div>
     </div>
   );
 };

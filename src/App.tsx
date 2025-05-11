@@ -11,6 +11,7 @@ import LocalStorageViewer from "./pages/LocalStorageViewer";
 import { useCurrentSchedule } from "./context/CurrentScheduleContext";
 import { useSavedSchedules } from "./context/SavedSchedulesContext";
 import ScheduleActions from "./components/ScheduleActions";
+import ResizableTable from "./components/ResizableTable";
 
 function App() {
   const activityContext = useContext(ActivityContext);
@@ -156,50 +157,16 @@ function App() {
       <div className="container-main">
         {activeTab === "Emploi du temps" && (
           <>
-            <div id="emploi-du-temps-export">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Heures/jour</th>
-                    {WEEK_DAYS.map((day, dayIndex) => (
-                      <th key={dayIndex}>{day}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {TIME_SLOTS.map((slot, index) => (
-                    <tr key={index}>
-                      <th>{slot < 10 ? "0" + slot : slot}h</th>
-                      {WEEK_DAYS.map((_, idx) => {
-                        const slotId = `${slot}-${idx}`;
-                        const activityId = slotToActivityMap.get(slotId);
-                        const activity = activities.find(
-                          (a) => a.id === activityId
-                        );
-
-                        return (
-                          <td
-                            key={idx}
-                            id={slotId}
-                            className={`timeSlotHour slot ${
-                              selectedSlots.has(slotId) ? "selected" : ""
-                            }`}
-                            onMouseDown={handleMouseDown}
-                            onMouseEnter={handleMouseEnter}
-                            style={{
-                              backgroundColor: activity?.color || undefined,
-                              color: activity ? "#000" : undefined, // temporaire, à améliorer plus tard
-                            }}
-                          >
-                            {activity?.name || ""}
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <ResizableTable
+              selectedSlots={selectedSlots}
+              slotToActivityMap={slotToActivityMap}
+              activities={activities}
+              WEEK_DAYS={WEEK_DAYS}
+              TIME_SLOTS={TIME_SLOTS}
+              handleMouseDown={handleMouseDown}
+              handleMouseEnter={handleMouseEnter}
+              clearSelection={clearSelection}
+            />
             <TimeSlotPreview
               selectedSlots={selectedSlots}
               selectedActivityId={selectedActivityId}
@@ -261,6 +228,7 @@ function App() {
 
         {activeTab === "Debug" && <LocalStorageViewer />}
       </div>
+
       {currentSchedule && (
         <div className="current-schedule-info">
           <p>

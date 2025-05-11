@@ -3,6 +3,7 @@ import { useContext, useState } from "react";
 import { ActivityContext } from "../context/ActivityContext";
 import { TimeSlotPreviewProps } from "../types";
 import CreateActivityModal from "./CreateActivityModal";
+import "../CSS/TimeSlotPreview.css";
 
 const TimeSlotPreview: React.FC<TimeSlotPreviewProps> = ({
   selectedSlots,
@@ -18,6 +19,7 @@ const TimeSlotPreview: React.FC<TimeSlotPreviewProps> = ({
 }) => {
   const [isCreating, setIsCreating] = useState(false);
   const { activities, addActivity } = useContext(ActivityContext)!;
+
   const formattedSlots = Array.from(selectedSlots)
     .map((slotId) => {
       const [hour, day] = slotId.split("-");
@@ -30,17 +32,12 @@ const TimeSlotPreview: React.FC<TimeSlotPreviewProps> = ({
         endHour: parseInt(hour, 10) + 1,
       };
     })
-    .sort((a, b) => {
-      if (a.dayIndex !== b.dayIndex) return a.dayIndex - b.dayIndex;
-      return a.hour - b.hour;
-    });
+    .sort((a, b) => a.dayIndex - b.dayIndex || a.hour - b.hour);
 
   return (
-    <div>
+    <div className="preview-container">
       <h4>Selected Slots</h4>
-      <div
-        style={{ maxHeight: "100px", overflowY: "auto", marginBottom: "1rem" }}
-      >
+      <div className="slot-list">
         <ul>
           {formattedSlots.map((slot) => (
             <li key={slot.slotId}>
@@ -52,18 +49,16 @@ const TimeSlotPreview: React.FC<TimeSlotPreviewProps> = ({
 
       {selectedSlots.size > 0 && (
         <>
-          <label>
-            Associer à une activité :
+          <div className="activity-selector">
+            <label htmlFor="activity-select">Associer à une activité :</label>
             <select
+              id="activity-select"
               value={selectedActivityId}
               onChange={(e) => {
                 const value = e.target.value;
-
-                if (value === "__new__") {
-                  setIsCreating(true);
-                } else {
-                  setSelectedActivityId(value);
-                }
+                value === "__new__"
+                  ? setIsCreating(true)
+                  : setSelectedActivityId(value);
               }}
             >
               <option value="">-- Choisir une activité --</option>
@@ -74,46 +69,45 @@ const TimeSlotPreview: React.FC<TimeSlotPreviewProps> = ({
               ))}
               <option value="__new__">+ Créer une nouvelle activité...</option>
             </select>
-          </label>
+            <button
+              onClick={() => {
+                if (selectedActivityId) {
+                  onAssignActivity(selectedActivityId);
+                  setSelectedActivityId("");
+                }
+              }}
+              disabled={!selectedActivityId}
+            >
+              Valider
+            </button>
+          </div>
 
-          <button
-            onClick={() => {
-              if (selectedActivityId) {
-                onAssignActivity(selectedActivityId);
-                setSelectedActivityId("");
-              }
-            }}
-            disabled={!selectedActivityId}
-          >
-            Valider
-          </button>
           {hasConflicts && (
             <div className="conflict-options">
               <p>
-                ⚠️ {conflictingSlots.length} créneau(x) déjà occupé(s) dans
-                votre sélection :<br />
+                ⚠️ {conflictingSlots.length} créneau(x) déjà occupé(s) :
+                <br />
                 {conflictingSlots.join(", ")}
               </p>
-
               <button onClick={onClearAndAssign}>
                 1) Effacer toutes les activités de la sélection
               </button>
-
               <button onClick={onForceReplace}>
                 2) Remplacer les existantes et remplir les cases vides
               </button>
             </div>
           )}
 
-          {error && <p style={{ color: "red" }}>{error}</p>}
+          {error && <p className="error-text">{error}</p>}
+
+          <div className="reset-section">
+            <button onClick={onResetSelection}>
+              Réinitialiser la sélection
+            </button>
+          </div>
         </>
       )}
-      {selectedSlots.size > 0 && (
-        <>
-          <button onClick={onResetSelection}>Réinitialiser la sélection</button>
-          {/* le reste du menu déroulant et des boutons */}
-        </>
-      )}
+
       {isCreating && (
         <CreateActivityModal
           onClose={() => setIsCreating(false)}
@@ -121,7 +115,7 @@ const TimeSlotPreview: React.FC<TimeSlotPreviewProps> = ({
             addActivity(activity);
             setSelectedActivityId(activity.id);
             setIsCreating(false);
-            onAssignActivity(activity.id); // Ajoute directement dans l'emploi du temps
+            onAssignActivity(activity.id);
           }}
         />
       )}
