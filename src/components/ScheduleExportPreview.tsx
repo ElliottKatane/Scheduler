@@ -1,5 +1,6 @@
 import { WEEK_DAYS, TIME_SLOTS } from "../constants";
 import { Activity } from "../types";
+import "../CSS/ScheduleExportPreview.css";
 
 interface Props {
   slotToActivityMap: Map<string, string>;
@@ -23,35 +24,27 @@ const ScheduleExportPreview: React.FC<Props> = ({
   };
 
   return (
-    <div id="full-export" style={{ padding: "1rem", width: "fit-content" }}>
-      <table style={{ borderCollapse: "collapse", width: "100%" }}>
+    <div id="full-export">
+      <table>
         <thead>
           <tr>
-            <th style={{ border: "1px solid #ccc", padding: "4px" }}>Heures</th>
+            <th>Heures</th>
             {WEEK_DAYS.map((day, i) => (
-              <th key={i} style={{ border: "1px solid #ccc", padding: "4px" }}>
-                {day}
-              </th>
+              <th key={i}>{day}</th>
             ))}
           </tr>
         </thead>
         <tbody>
           {TIME_SLOTS.map((hour) => (
             <tr key={hour}>
-              <td style={{ border: "1px solid #ccc", padding: "4px" }}>
-                {hour}h
-              </td>
+              <td className="hour-cell">{hour}h</td>
               {WEEK_DAYS.map((_, dayIndex) => {
                 const slotId = `${hour}-${dayIndex}`;
                 return (
                   <td
                     key={slotId}
                     style={{
-                      border: "1px solid #ccc",
-                      padding: "4px",
                       backgroundColor: getColor(slotId),
-                      minWidth: "100px",
-                      height: "40px",
                     }}
                   >
                     {getLabel(slotId)}

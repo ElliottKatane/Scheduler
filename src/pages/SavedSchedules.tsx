@@ -41,7 +41,7 @@ const SavedSchedules: React.FC<Props> = ({ activities, onLoad }) => {
             filename: `${s.name}.pdf`,
             image: { type: "jpeg", quality: 0.98 },
             html2canvas: { scale: 2 },
-            jsPDF: { unit: "in", format: "a4", orientation: "landscape" },
+            jsPDF: { unit: "mm", format: "a4", orientation: "landscape" },
           })
           .save()
           .then(() => setRenderedExport(null)); // Clean up

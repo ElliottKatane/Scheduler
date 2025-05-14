@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import "../CSS/ResizableTable.css";
 
 interface ResizableTableProps {
   selectedSlots: Set<string>;
@@ -8,7 +9,7 @@ interface ResizableTableProps {
   TIME_SLOTS: number[];
   handleMouseDown: (e: React.MouseEvent) => void;
   handleMouseEnter: (e: React.MouseEvent) => void;
-  onAssignActivityToSelectedSlots: () => void;
+  clearSelection: () => void;
 }
 
 const ResizableTable: React.FC<ResizableTableProps> = ({
@@ -19,23 +20,21 @@ const ResizableTable: React.FC<ResizableTableProps> = ({
   TIME_SLOTS,
   handleMouseDown,
   handleMouseEnter,
-  onAssignActivityToSelectedSlots,
 }) => {
-  const [width, setWidth] = useState(600); // Largeur initiale du tableau
+  const [width, setWidth] = useState(600);
+  const [height, setHeight] = useState(400);
   const [isResizing, setIsResizing] = useState(false);
-
-  const startResize = (e: React.MouseEvent) => {
-    setIsResizing(true);
-    document.addEventListener("mousemove", resize);
-    document.addEventListener("mouseup", stopResize);
-  };
 
   const resize = (e: MouseEvent) => {
     if (isResizing) {
-      const newWidth = e.clientX; // Nouvelle largeur basée sur la position de la souris
+      const newWidth = e.clientX;
+      const newHeight = e.clientY;
       setWidth(newWidth);
+      setHeight(newHeight);
     }
   };
+
+  const rowHeight = Math.max(60, height / TIME_SLOTS.length);
 
   const stopResize = () => {
     setIsResizing(false);
@@ -44,16 +43,8 @@ const ResizableTable: React.FC<ResizableTableProps> = ({
   };
 
   return (
-    <div
-      style={{
-        width: width,
-        resize: "horizontal",
-        overflow: "auto",
-        border: "1px solid black",
-      }}
-      className="container-main"
-    >
-      <table>
+    <div className="container-main" style={{ width }}>
+      <table className="schedule-table">
         <thead>
           <tr>
             <th>Heures/jour</th>
@@ -65,46 +56,45 @@ const ResizableTable: React.FC<ResizableTableProps> = ({
         <tbody>
           {TIME_SLOTS.map((slot, index) => (
             <tr key={index}>
-              <th>{slot < 10 ? "0" + slot : slot}h</th>
-              {WEEK_DAYS.map((_, idx) => {
-                const slotId = `${slot}-${idx}`;
-                const activityId = slotToActivityMap.get(slotId);
-                const activity = activities.find((a) => a.id === activityId);
-
-                return (
-                  <td
-                    key={idx}
-                    id={slotId}
-                    className={`timeSlotHour slot ${
-                      selectedSlots.has(slotId) ? "selected" : ""
+              <th style={{ height: rowHeight }}>
+                {slot.toString().padStart(2, "0")}:00
+              </th>
+              {WEEK_DAYS.map((_, idx) => (
+                <td
+                  key={idx}
+                  className="timeSlotCell"
+                  style={{ height: rowHeight }}
+                >
+                  <div
+                    className={`half-slot top ${
+                      selectedSlots.has(`${slot}-00-${idx}`) ? "selected" : ""
                     }`}
+                    id={`${slot}-00-${idx}`}
                     onMouseDown={handleMouseDown}
                     onMouseEnter={handleMouseEnter}
-                    style={{
-                      backgroundColor: activity?.color || undefined,
-                      color: activity ? "#000" : undefined,
-                    }}
                   >
-                    {activity?.name || ""}
-                  </td>
-                );
-              })}
+                    {activities.find(
+                      (a) => a.id === slotToActivityMap.get(`${slot}-00-${idx}`)
+                    )?.name || ""}
+                  </div>
+                  <div
+                    className={`half-slot bottom ${
+                      selectedSlots.has(`${slot}-30-${idx}`) ? "selected" : ""
+                    }`}
+                    id={`${slot}-30-${idx}`}
+                    onMouseDown={handleMouseDown}
+                    onMouseEnter={handleMouseEnter}
+                  >
+                    {activities.find(
+                      (a) => a.id === slotToActivityMap.get(`${slot}-30-${idx}`)
+                    )?.name || ""}
+                  </div>
+                </td>
+              ))}
             </tr>
           ))}
         </tbody>
       </table>
-      <div
-        className="resize-handle"
-        style={{
-          width: "10px",
-          height: "100%",
-          backgroundColor: "gray",
-          position: "absolute",
-          right: 0,
-          cursor: "ew-resize",
-        }}
-        onMouseDown={startResize}
-      />
     </div>
   );
 };

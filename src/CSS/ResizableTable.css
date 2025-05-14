@@ -1,0 +1,68 @@
+/* Conteneur principal */
+.container-main {
+  padding: 1rem;
+  max-width: 100%;
+  overflow-x: auto;
+  border: 5px solid blue;
+  resize: both;
+  overflow: hidden;
+}
+
+/* Table */
+.schedule-table {
+  border-collapse: collapse;
+  table-layout: fixed;
+  width: 100%;
+  user-select: none;
+  font-family: sans-serif;
+}
+
+/* En-tête */
+thead {
+  border: 2px solid lightblue;
+}
+
+th,
+td {
+  border: 1px solid lightblue;
+  text-align: center;
+  padding: 0;
+  font-size: 0.9rem;
+}
+
+/* Cellules horaires (lignes de gauche) */
+th {
+  min-width: 60px;
+}
+
+/* Cellules interactives */
+.timeSlotCell {
+  position: relative;
+  padding: 0;
+}
+
+.half-slot {
+  width: 100%;
+  height: 50%;
+  box-sizing: border-box;
+  border-bottom: 1px solid #ccc;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+}
+
+.half-slot.bottom {
+  border-bottom: none;
+}
+
+.half-slot:hover {
+  background-color: #f0f0f0;
+}
+
+.half-slot.selected {
+  background-color: lightgreen;
+  outline: 2px solid green;
+  outline-offset: -2px;
+}

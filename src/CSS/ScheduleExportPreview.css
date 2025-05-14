@@ -1,0 +1,57 @@
+#full-export {
+  padding: 0.5rem;
+  width: 100%;
+  font-family: sans-serif;
+  font-size: 10px;
+}
+
+#full-export table {
+  border-collapse: collapse;
+  width: 100%;
+  table-layout: fixed;
+  page-break-inside: avoid;
+}
+
+#full-export th,
+#full-export td {
+  border: 1px solid #ccc;
+  padding: 4px;
+  text-align: center;
+  vertical-align: middle;
+  word-wrap: break-word;
+}
+#full-export .hour-cell {
+  font-weight: bold;
+  background-color: #e1e1e1;
+  text-align: center;
+  min-width: 60px;
+  white-space: nowrap;
+}
+
+#full-export th {
+  background-color: #e1e1e1;
+  font-weight: bold;
+}
+
+#full-export td {
+  height: 30px;
+  min-width: 80px;
+}
+
+/* Print-specific rules */
+@media print {
+  body {
+    -webkit-print-color-adjust: exact !important;
+  }
+
+  #full-export {
+    page-break-inside: avoid !important;
+  }
+
+  table,
+  tr,
+  td,
+  th {
+    page-break-inside: avoid !important;
+  }
+}

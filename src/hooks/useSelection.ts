@@ -37,7 +37,9 @@ export const useSelection = () => {
 
     const handleMouseDown = (e: React.MouseEvent) => {
         const target = e.target as HTMLElement;
-        if (!target.classList.contains("slot")) return;
+          console.log("Mouse down on:", target.id, target.className);
+
+        if (!target.classList.contains("half-slot")) return;
 
         isMouseDown.current = true;
         toggleSlotSelection(target.id);
@@ -47,7 +49,7 @@ export const useSelection = () => {
         if (!isMouseDown.current) return;
         
         const target = e.target as HTMLElement;
-        if (!target.classList.contains("slot")) return;
+        if (!target.classList.contains("half-slot")) return;
 
         toggleSlotSelection(target.id);
     };

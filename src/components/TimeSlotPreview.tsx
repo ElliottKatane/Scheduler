@@ -5,6 +5,22 @@ import { TimeSlotPreviewProps } from "../types";
 import CreateActivityModal from "./CreateActivityModal";
 import "../CSS/TimeSlotPreview.css";
 
+type SlotItem = {
+  slotId: string;
+  dayIndex: number;
+  hour: number;
+  minute: number;
+  day: string;
+};
+
+type TimeRange = {
+  day: string;
+  startHour: number;
+  startMinute: number;
+  endHour: number;
+  endMinute: number;
+};
+
 const TimeSlotPreview: React.FC<TimeSlotPreviewProps> = ({
   selectedSlots,
   selectedActivityId,
@@ -20,28 +36,65 @@ const TimeSlotPreview: React.FC<TimeSlotPreviewProps> = ({
   const [isCreating, setIsCreating] = useState(false);
   const { activities, addActivity } = useContext(ActivityContext)!;
 
-  const formattedSlots = Array.from(selectedSlots)
+  const parsedSlots: SlotItem[] = Array.from(selectedSlots)
     .map((slotId) => {
-      const [hour, day] = slotId.split("-");
-      return {
-        slotId,
-        dayIndex: parseInt(day, 10),
-        hour: parseInt(hour, 10),
-        day: WEEK_DAYS[parseInt(day, 10)],
-        startHour: parseInt(hour, 10),
-        endHour: parseInt(hour, 10) + 1,
-      };
+      const [hourStr, minuteStr, dayStr] = slotId.split("-");
+      const hour = parseInt(hourStr, 10);
+      const minute = parseInt(minuteStr, 10);
+      const dayIndex = parseInt(dayStr, 10);
+      const day = WEEK_DAYS[dayIndex];
+
+      return { slotId, dayIndex, hour, minute, day };
     })
-    .sort((a, b) => a.dayIndex - b.dayIndex || a.hour - b.hour);
+    .sort(
+      (a, b) =>
+        a.dayIndex - b.dayIndex || a.hour - b.hour || a.minute - b.minute
+    );
+
+  const mergedSlots: TimeRange[] = [];
+
+  for (const slot of parsedSlots) {
+    const last = mergedSlots[mergedSlots.length - 1];
+
+    const isConsecutive =
+      last &&
+      last.day === slot.day &&
+      slot.hour === last.endHour &&
+      slot.minute === last.endMinute;
+
+    if (isConsecutive) {
+      if (slot.minute === 0) {
+        last.endHour = slot.hour;
+        last.endMinute = 30;
+      } else {
+        last.endHour = slot.hour + 1;
+        last.endMinute = 0;
+      }
+    } else {
+      const nextHour = slot.minute === 0 ? slot.hour : slot.hour + 1;
+      const nextMinute = slot.minute === 0 ? 30 : 0;
+
+      mergedSlots.push({
+        day: slot.day,
+        startHour: slot.hour,
+        startMinute: slot.minute,
+        endHour: nextHour,
+        endMinute: nextMinute,
+      });
+    }
+  }
 
   return (
     <div className="preview-container">
-      <h4>Selected Slots</h4>
+      <h4>Créneaux sélectionnés</h4>
       <div className="slot-list">
         <ul>
-          {formattedSlots.map((slot) => (
-            <li key={slot.slotId}>
-              {slot.day} : {slot.startHour}h - {slot.endHour}h
+          {mergedSlots.map((slot, index) => (
+            <li key={index}>
+              {slot.day} : {slot.startHour.toString().padStart(2, "0")}h
+              {slot.startMinute === 30 ? "30" : ""} -{" "}
+              {slot.endHour.toString().padStart(2, "0")}h
+              {slot.endMinute === 30 ? "30" : ""}
             </li>
           ))}
         </ul>
