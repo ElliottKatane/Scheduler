@@ -22,8 +22,13 @@ function App() {
   const { schedules } = useSavedSchedules(); // pour comparer avec les emplois sauvegardés
 
   // tr : ligne. donc pour avoir les horaires en ligne, il faut mapper les slotHours dans des <tr>
-  const { handleMouseDown, handleMouseEnter, selectedSlots, clearSelection } =
-    useSelection();
+  const {
+    handleMouseDown,
+    handleMouseEnter,
+    selectedSlots,
+    clearSelection,
+    setSelectedSlots,
+  } = useSelection();
   const { currentSchedule, setCurrentSchedule } = useCurrentSchedule();
   const [activeTab, setActiveTab] = useState("Emploi du temps");
   const [slotToActivityMap, setSlotToActivityMap] = useState<

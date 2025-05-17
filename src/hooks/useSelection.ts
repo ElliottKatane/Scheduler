@@ -56,6 +56,7 @@ export const useSelection = () => {
 
     return {
         selectedSlots,
+        setSelectedSlots,
         handleMouseDown,
         handleMouseEnter,
         clearSelection,

@@ -1,25 +1,9 @@
-import { WEEK_DAYS } from "../constants";
 import { useContext, useState } from "react";
 import { ActivityContext } from "../context/ActivityContext";
 import { TimeSlotPreviewProps } from "../types";
 import CreateActivityModal from "./CreateActivityModal";
+import { mergeTimeSlots } from "../utils/mergeTimeSlots";
 import "../CSS/TimeSlotPreview.css";
-
-type SlotItem = {
-  slotId: string;
-  dayIndex: number;
-  hour: number;
-  minute: number;
-  day: string;
-};
-
-type TimeRange = {
-  day: string;
-  startHour: number;
-  startMinute: number;
-  endHour: number;
-  endMinute: number;
-};
 
 const TimeSlotPreview: React.FC<TimeSlotPreviewProps> = ({
   selectedSlots,
@@ -36,53 +20,14 @@ const TimeSlotPreview: React.FC<TimeSlotPreviewProps> = ({
   const [isCreating, setIsCreating] = useState(false);
   const { activities, addActivity } = useContext(ActivityContext)!;
 
-  const parsedSlots: SlotItem[] = Array.from(selectedSlots)
-    .map((slotId) => {
-      const [hourStr, minuteStr, dayStr] = slotId.split("-");
-      const hour = parseInt(hourStr, 10);
-      const minute = parseInt(minuteStr, 10);
-      const dayIndex = parseInt(dayStr, 10);
-      const day = WEEK_DAYS[dayIndex];
-
-      return { slotId, dayIndex, hour, minute, day };
-    })
-    .sort(
-      (a, b) =>
-        a.dayIndex - b.dayIndex || a.hour - b.hour || a.minute - b.minute
-    );
-
-  const mergedSlots: TimeRange[] = [];
-
-  for (const slot of parsedSlots) {
-    const last = mergedSlots[mergedSlots.length - 1];
-
-    const isConsecutive =
-      last &&
-      last.day === slot.day &&
-      slot.hour === last.endHour &&
-      slot.minute === last.endMinute;
-
-    if (isConsecutive) {
-      if (slot.minute === 0) {
-        last.endHour = slot.hour;
-        last.endMinute = 30;
-      } else {
-        last.endHour = slot.hour + 1;
-        last.endMinute = 0;
-      }
-    } else {
-      const nextHour = slot.minute === 0 ? slot.hour : slot.hour + 1;
-      const nextMinute = slot.minute === 0 ? 30 : 0;
-
-      mergedSlots.push({
-        day: slot.day,
-        startHour: slot.hour,
-        startMinute: slot.minute,
-        endHour: nextHour,
-        endMinute: nextMinute,
-      });
-    }
-  }
+  const mergedSlots = mergeTimeSlots(
+    new Map(
+      Array.from(selectedSlots).map((slotId) => [
+        slotId,
+        "preview", // placeholder activityId since mergeTimeSlots requires one
+      ])
+    )
+  );
 
   return (
     <div className="preview-container">
@@ -138,8 +83,7 @@ const TimeSlotPreview: React.FC<TimeSlotPreviewProps> = ({
           {hasConflicts && (
             <div className="conflict-options">
               <p>
-                ⚠️ {conflictingSlots.length} créneau(x) déjà occupé(s) :
-                <br />
+                ⚠️ {conflictingSlots.length} créneau(x) déjà occupé(s) :<br />
                 {conflictingSlots.join(", ")}
               </p>
               <button onClick={onClearAndAssign}>

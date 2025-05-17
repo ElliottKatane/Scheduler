@@ -16,6 +16,16 @@ export interface TimeSlotPreviewProps {
   onClearAndAssign: () => void;
   hasConflicts: boolean;
 }
+export interface ResizableTableProps {
+  selectedSlots: Set<string>;
+  slotToActivityMap: Map<string, string>;
+  activities: Activity[];
+  WEEK_DAYS: string[];
+  TIME_SLOTS: number[];
+  handleMouseDown: (e: React.MouseEvent) => void;
+  handleMouseEnter: (e: React.MouseEvent) => void;
+  clearSelection: () => void;
+}
 export interface SavedSchedule {
   id: string;
   name: string;
