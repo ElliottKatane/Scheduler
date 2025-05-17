@@ -4,7 +4,6 @@ import { useSelection } from "./hooks/useSelection";
 import TimeSlotPreview from "./components/TimeSlotPreview";
 import ManageActivities from "./pages/ManageActivities";
 import Navbar from "./UI/Navbar";
-import "./App.css";
 import { ActivityContext } from "./context/ActivityContext";
 import SavedSchedules from "./pages/SavedSchedules";
 import LocalStorageViewer from "./pages/LocalStorageViewer";
@@ -171,6 +170,7 @@ function App() {
               handleMouseDown={handleMouseDown}
               handleMouseEnter={handleMouseEnter}
               clearSelection={clearSelection}
+              setSelectedSlots={setSelectedSlots}
             />
             <TimeSlotPreview
               selectedSlots={selectedSlots}

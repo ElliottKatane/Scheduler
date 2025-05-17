@@ -12,7 +12,7 @@ interface ResizableTableProps {
   handleMouseDown: (e: React.MouseEvent) => void;
   handleMouseEnter: (e: React.MouseEvent) => void;
   clearSelection: () => void;
-  setSelectedSlots?: (slots: Set<string>) => void;
+  setSelectedSlots: (slots: Set<string>) => void;
 }
 
 const ResizableTable: React.FC<ResizableTableProps> = ({
@@ -23,20 +23,18 @@ const ResizableTable: React.FC<ResizableTableProps> = ({
   TIME_SLOTS,
   handleMouseDown,
   handleMouseEnter,
-  clearSelection,
   setSelectedSlots,
 }) => {
-  const rowHeight = 30; // demi-heure = 30px
-
+  const rowHeight = 30;
   const merged = mergeTimeSlots(slotToActivityMap);
-  const slotToBlockMap = new Map<string, (typeof merged)[0]>();
-  const blockStartSet = new Set<string>();
-  for (const block of merged) {
-    for (const id of block.slotIds) {
-      slotToBlockMap.set(id, block);
-    }
-    blockStartSet.add(block.slotIds[0]);
-  }
+
+  const slotToMerged = new Map<string, (typeof merged)[0]>();
+  const startSlotIds = new Set<string>();
+
+  merged.forEach((block) => {
+    block.slotIds.forEach((id) => slotToMerged.set(id, block));
+    startSlotIds.add(block.slotIds[0]);
+  });
 
   const getActivity = (id: string | undefined) =>
     activities.find((a) => a.id === id) || null;
@@ -70,76 +68,88 @@ const ResizableTable: React.FC<ResizableTableProps> = ({
         </thead>
         <tbody>
           {TIME_SLOTS.flatMap((hour) =>
-            minutes.map((minute, mIndex) => (
-              <tr key={`${hour}-${minute}`}>
-                <th style={{ height: rowHeight }}>
-                  {mIndex === 0 ? `${hour.toString().padStart(2, "0")}:00` : ""}
-                </th>
-                {WEEK_DAYS.map((_, dayIndex) => {
-                  const slotId = `${hour}-${minute}-${dayIndex}`;
-                  const block = slotToBlockMap.get(slotId);
-                  const activity = getActivity(slotToActivityMap.get(slotId));
+            minutes.map((minute, minIndex) => {
+              const label =
+                minIndex === 0 ? `${hour.toString().padStart(2, "0")}:00` : "";
 
-                  if (block && block.slotIds[0] === slotId) {
-                    const totalHeight = block.slotIds.length * rowHeight;
+              return (
+                <tr key={`${hour}-${minute}`}>
+                  <th style={{ height: rowHeight }}>{label}</th>
+                  {WEEK_DAYS.map((_, dayIndex) => {
+                    const slotId = `${hour}-${minute}-${dayIndex}`;
+                    const mergedBlock = slotToMerged.get(slotId);
+                    const isStart = startSlotIds.has(slotId);
+                    const activityId = slotToActivityMap.get(slotId);
+                    const activity = getActivity(activityId);
+                    const isSelected = selectedSlots.has(slotId);
+                    const isInsideBlock =
+                      mergedBlock && mergedBlock.slotIds.includes(slotId);
+
+                    const isLastInBlock =
+                      isInsideBlock &&
+                      mergedBlock!.slotIds[mergedBlock!.slotIds.length - 1] ===
+                        slotId;
+
+                    const className =
+                      "half-slot" +
+                      (isInsideBlock && !isStart ? " no-top-border" : "") +
+                      (isInsideBlock && !isLastInBlock
+                        ? " no-bottom-border"
+                        : "") +
+                      (isSelected ? " selected" : "");
+
                     return (
                       <td
                         key={slotId}
-                        className="timeSlotCell"
+                        className={`timeSlotCell ${
+                          slotToMerged.has(slotId) ? "merged-cell" : ""
+                        }`}
                         style={{ height: rowHeight }}
                       >
                         <div
-                          className="merged-block"
+                          className={className}
+                          id={slotId}
                           style={{
-                            backgroundColor: activity?.color || "#888",
-                            height: totalHeight,
+                            backgroundColor: isInsideBlock
+                              ? activity?.color
+                              : undefined,
                           }}
-                          onClick={() =>
-                            setSelectedSlots?.(new Set(block.slotIds))
+                          onMouseDown={
+                            isInsideBlock
+                              ? (e) => {
+                                  e.preventDefault();
+                                  setSelectedSlots(
+                                    new Set(mergedBlock!.slotIds)
+                                  );
+                                }
+                              : handleMouseDown
+                          }
+                          onMouseEnter={
+                            isInsideBlock ? undefined : handleMouseEnter
                           }
                         >
-                          <div className="activity-name">{activity?.name}</div>
-                          <div className="activity-duration">
-                            {formatDuration(
-                              block.startHour,
-                              block.startMinute,
-                              block.endHour,
-                              block.endMinute
-                            )}
-                          </div>
+                          {isStart && activity ? (
+                            <>
+                              <div className="activity-name">
+                                {activity.name}
+                              </div>
+                              <div className="activity-duration">
+                                {formatDuration(
+                                  mergedBlock!.startHour,
+                                  mergedBlock!.startMinute,
+                                  mergedBlock!.endHour,
+                                  mergedBlock!.endMinute
+                                )}
+                              </div>
+                            </>
+                          ) : null}
                         </div>
                       </td>
                     );
-                  } else if (!block) {
-                    return (
-                      <td
-                        key={slotId}
-                        className="timeSlotCell"
-                        style={{ height: rowHeight }}
-                      >
-                        <div
-                          className={`half-slot ${
-                            selectedSlots.has(slotId) ? "selected" : ""
-                          }`}
-                          id={slotId}
-                          onMouseDown={handleMouseDown}
-                          onMouseEnter={handleMouseEnter}
-                        />
-                      </td>
-                    );
-                  } else {
-                    // case du bloc déjà affiché plus haut
-                    return (
-                      <td
-                        key={slotId}
-                        className="timeSlotCell"
-                        style={{ height: rowHeight }}
-                      />
-                    );
-                  }
-                })}
-              </tr>
-            ))
+                  })}
+                </tr>
+              );
+            })
           )}
         </tbody>
       </table>
