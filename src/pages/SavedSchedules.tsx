@@ -17,10 +17,10 @@ const SavedSchedules: React.FC<Props> = ({ activities, onLoad }) => {
   const [renderedExport, setRenderedExport] = useState<React.ReactNode | null>(
     null
   );
+
   const handleExport = (s: SavedSchedule) => {
     const map = new Map(s.data);
 
-    // Inject the export component invisibly into the DOM
     setRenderedExport(
       <div style={{ display: "none" }}>
         <ScheduleExportPreview
@@ -30,7 +30,6 @@ const SavedSchedules: React.FC<Props> = ({ activities, onLoad }) => {
       </div>
     );
 
-    // Laisse le temps au DOM de se mettre à jour, puis exporte
     setTimeout(() => {
       const element = document.getElementById("full-export");
       if (element) {
@@ -40,11 +39,11 @@ const SavedSchedules: React.FC<Props> = ({ activities, onLoad }) => {
             margin: 0.5,
             filename: `${s.name}.pdf`,
             image: { type: "jpeg", quality: 0.98 },
-            html2canvas: { scale: 2 },
+            html2canvas: { scale: 1.2 },
             jsPDF: { unit: "mm", format: "a4", orientation: "landscape" },
           })
           .save()
-          .then(() => setRenderedExport(null)); // Clean up
+          .then(() => setRenderedExport(null));
       }
     }, 100);
   };
@@ -62,11 +61,10 @@ const SavedSchedules: React.FC<Props> = ({ activities, onLoad }) => {
               slotToActivityMap={new Map(s.data)}
               activities={activities}
               onClick={() => onLoad(s.data, s.id, s.name)}
+              enableMergedView={true}
             />
 
-            <div
-              style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem" }}
-            >
+            <div className="snippet-actions">
               <button onClick={() => deleteSchedule(s.id)}>Supprimer</button>
               <button onClick={() => handleExport(s)}>Exporter en PDF</button>
             </div>

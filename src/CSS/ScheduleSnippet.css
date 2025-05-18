@@ -7,37 +7,51 @@
   overflow: hidden;
   margin: 0 auto;
 }
-/* Snippets d'emploi du temps (mini-grilles) */
+
+/* Grille de 7 jours x n lignes (2 par heure) */
 .grid-snippet {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
+  grid-auto-rows: 10px; /* 10px par tranche de 30 min */
   gap: 1px;
   background: #ccc;
   border: 1px solid #aaa;
   width: 100%;
   max-width: 250px;
-  aspect-ratio: 7 / 12;
+  overflow: hidden;
 }
-
+/* Cas normal */
 .slot-mini {
   width: 100%;
   aspect-ratio: 1 / 1;
-}
-.slot-mini {
-  width: 100%;
-  aspect-ratio: 1 / 1;
-  background-color: #fff;
   border: 1px solid #ddd;
 }
-.schedule-snippet h5 {
-  margin-bottom: 0.5rem;
-  color: #fff;
+
+/* Supprime la couleur blanche par défaut */
+.slot-mini:not(.merged):not(.start):not(.end) {
+  background-color: #fff;
 }
 
-/* .grid-snippet {
-  display: grid;
-  grid-auto-rows: 17px;
-  gap: 1px;
-  overflow: hidden;
-  max-height: 305px;
-} */
+/* Bloc de 30min (start et end en même temps) */
+.slot-mini.start.end {
+  border-top: 1px solid #aaa !important;
+  border-bottom: 1px solid #aaa !important;
+}
+
+/* Milieu d’un bloc fusionné */
+.slot-mini.merged {
+  border-top: none !important;
+  border-bottom: none !important;
+}
+
+/* Début d’un bloc fusionné */
+.slot-mini.start {
+  border-top: 1px solid #aaa !important;
+  border-bottom: none !important;
+}
+
+/* Fin d’un bloc fusionné */
+.slot-mini.end {
+  border-bottom: 1px solid #aaa !important;
+  border-top: none !important;
+}

@@ -39,15 +39,30 @@ const ScheduleExportPreview: React.FC<Props> = ({
             <tr key={hour}>
               <td className="hour-cell">{hour}h</td>
               {WEEK_DAYS.map((_, dayIndex) => {
-                const slotId = `${hour}-${dayIndex}`;
+                const slotId1 = `${hour}-00-${dayIndex}`;
+                const slotId2 = `${hour}-30-${dayIndex}`;
+
+                const label1 = getLabel(slotId1);
+                const label2 = getLabel(slotId2);
+                const color1 = getColor(slotId1);
+                const color2 = getColor(slotId2);
+
+                const isSame = label1 === label2 && label1 !== "";
+
                 return (
                   <td
-                    key={slotId}
+                    key={`${hour}-${dayIndex}`}
                     style={{
-                      backgroundColor: getColor(slotId),
+                      background: isSame
+                        ? color1
+                        : `linear-gradient(to bottom, ${color1} 50%, ${color2} 50%)`,
+                      fontSize: "8px",
+                      padding: "2px",
+                      color: "#000",
                     }}
                   >
-                    {getLabel(slotId)}
+                    {label1 && <div>{label1}</div>}
+                    {!isSame && label2 && <div>{label2}</div>}
                   </td>
                 );
               })}

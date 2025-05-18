@@ -7,18 +7,11 @@ import "../CSS/TimeSlotPreview.css";
 
 const TimeSlotPreview: React.FC<TimeSlotPreviewProps> = ({
   selectedSlots,
-  // selectedActivityId,
   setSelectedActivityId,
   onAssignActivity,
-  // error,
-  // conflictingSlots,
-  // onForceReplace,
-  // onClearAndAssign,
-  // hasConflicts,
-  // onResetSelection,
 }) => {
   const [isCreating, setIsCreating] = useState(false);
-  const { activities, addActivity } = useContext(ActivityContext)!;
+  const { addActivity } = useContext(ActivityContext)!;
 
   const mergedSlots = mergeTimeSlots(
     new Map(
