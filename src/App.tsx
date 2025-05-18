@@ -11,7 +11,8 @@ import { useCurrentSchedule } from "./context/CurrentScheduleContext";
 import { useSavedSchedules } from "./context/SavedSchedulesContext";
 import ScheduleActions from "./components/ScheduleActions";
 import ResizableTable from "./components/ResizableTable";
-
+import ActivityActions from "./components/ActivityActions";
+import "./App.css";
 function App() {
   const activityContext = useContext(ActivityContext);
   if (!activityContext) return null; // ou fallback/chargement si besoin
@@ -160,54 +161,73 @@ function App() {
 
       <div className="container-main">
         {activeTab === "Emploi du temps" && (
-          <>
-            <ResizableTable
-              selectedSlots={selectedSlots}
-              slotToActivityMap={slotToActivityMap}
-              activities={activities}
-              WEEK_DAYS={WEEK_DAYS}
-              TIME_SLOTS={TIME_SLOTS}
-              handleMouseDown={handleMouseDown}
-              handleMouseEnter={handleMouseEnter}
-              clearSelection={clearSelection}
-              setSelectedSlots={setSelectedSlots}
-            />
-            <TimeSlotPreview
-              selectedSlots={selectedSlots}
-              selectedActivityId={selectedActivityId}
-              setSelectedActivityId={setSelectedActivityId}
-              onAssignActivity={assignActivityToSelectedSlots}
-              error={error}
-              pendingAssignment={pendingAssignment}
-              conflictingSlots={conflictingSlots}
-              onClearAndAssign={() => {
-                setSlotToActivityMap((prev) => {
-                  const newMap = new Map(prev);
-                  selectedSlots.forEach((slotId) => newMap.delete(slotId));
-                  return newMap;
-                });
-                clearSelection();
-                setError(null);
-                setPendingAssignment(null);
-                setConflictingSlots([]);
-                setSelectedActivityId("");
-              }}
-              onForceReplace={() => {
-                if (pendingAssignment) applyAssignment(pendingAssignment);
-              }}
-              hasConflicts={hasConflicts}
-              onResetSelection={clearSelection}
-            />
-            <ScheduleActions
-              slotToActivityMap={slotToActivityMap}
-              clearSelection={clearSelection}
-              setSlotToActivityMap={setSlotToActivityMap}
-              setSelectedActivityId={setSelectedActivityId}
-              setPendingAssignment={setPendingAssignment}
-              setConflictingSlots={setConflictingSlots}
-              setHasConflicts={setHasConflicts}
-            />
-          </>
+          <div className="main-content">
+            <div className="sidebar">
+              <div className="card">
+                <TimeSlotPreview
+                  selectedSlots={selectedSlots}
+                  selectedActivityId={selectedActivityId}
+                  setSelectedActivityId={setSelectedActivityId}
+                  onAssignActivity={assignActivityToSelectedSlots}
+                  error={error}
+                  pendingAssignment={pendingAssignment}
+                  conflictingSlots={conflictingSlots}
+                  onClearAndAssign={() => {
+                    setSlotToActivityMap((prev) => {
+                      const newMap = new Map(prev);
+                      selectedSlots.forEach((slotId) => newMap.delete(slotId));
+                      return newMap;
+                    });
+                    clearSelection();
+                    setError(null);
+                    setPendingAssignment(null);
+                    setConflictingSlots([]);
+                    setSelectedActivityId("");
+                  }}
+                  onForceReplace={() => {
+                    if (pendingAssignment) applyAssignment(pendingAssignment);
+                  }}
+                  hasConflicts={hasConflicts}
+                  onResetSelection={clearSelection}
+                />
+
+                <ActivityActions
+                  activities={activities}
+                  selectedActivityId={selectedActivityId}
+                  setSelectedActivityId={setSelectedActivityId}
+                  onAssignActivity={assignActivityToSelectedSlots}
+                  onResetSelection={clearSelection}
+                  hasSelection={selectedSlots.size > 0}
+                />
+              </div>
+
+              <div className="card">
+                <ScheduleActions
+                  slotToActivityMap={slotToActivityMap}
+                  clearSelection={clearSelection}
+                  setSlotToActivityMap={setSlotToActivityMap}
+                  setSelectedActivityId={setSelectedActivityId}
+                  setPendingAssignment={setPendingAssignment}
+                  setConflictingSlots={setConflictingSlots}
+                  setHasConflicts={setHasConflicts}
+                />
+              </div>
+            </div>
+
+            <div className="calendar-section">
+              <ResizableTable
+                selectedSlots={selectedSlots}
+                slotToActivityMap={slotToActivityMap}
+                activities={activities}
+                WEEK_DAYS={WEEK_DAYS}
+                TIME_SLOTS={TIME_SLOTS}
+                handleMouseDown={handleMouseDown}
+                handleMouseEnter={handleMouseEnter}
+                clearSelection={clearSelection}
+                setSelectedSlots={setSelectedSlots}
+              />
+            </div>
+          </div>
         )}
 
         {activeTab === "Gérer les activités" && <ManageActivities />}

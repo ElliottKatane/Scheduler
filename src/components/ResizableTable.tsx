@@ -1,19 +1,7 @@
 import React from "react";
 import "../CSS/ResizableTable.css";
 import { mergeTimeSlots } from "../utils/mergeTimeSlots";
-import { Activity } from "../types";
-
-interface ResizableTableProps {
-  selectedSlots: Set<string>;
-  slotToActivityMap: Map<string, string>;
-  activities: Activity[];
-  WEEK_DAYS: string[];
-  TIME_SLOTS: number[];
-  handleMouseDown: (e: React.MouseEvent) => void;
-  handleMouseEnter: (e: React.MouseEvent) => void;
-  clearSelection: () => void;
-  setSelectedSlots: (slots: Set<string>) => void;
-}
+import { ResizableTableProps } from "../types";
 
 const ResizableTable: React.FC<ResizableTableProps> = ({
   selectedSlots,

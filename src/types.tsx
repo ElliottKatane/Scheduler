@@ -25,6 +25,7 @@ export interface ResizableTableProps {
   handleMouseDown: (e: React.MouseEvent) => void;
   handleMouseEnter: (e: React.MouseEvent) => void;
   clearSelection: () => void;
+  setSelectedSlots: (slots: Set<string>) => void;
 }
 export interface SavedSchedule {
   id: string;
