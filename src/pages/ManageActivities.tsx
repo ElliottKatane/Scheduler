@@ -1,6 +1,6 @@
 import { useEffect, useState, useContext } from "react";
 import { ActivityContext } from "../context/ActivityContext";
-
+import "../CSS/ManageActivities.css";
 const ManageActivities = () => {
   const context = useContext(ActivityContext);
   if (!context) return null;
@@ -89,14 +89,16 @@ const ManageActivities = () => {
       </form>
 
       <h4>Activités enregistrées</h4>
-      <ul>
+      <ul className="activity-list">
         {activities.map((activity) => (
-          <li key={activity.id}>
-            <span style={{ color: activity.color }}>{activity.name}</span>
-            {" — "}
-            <button onClick={() => handleEdit(activity.id)}>✏️</button>
-            <button onClick={() => handleDelete(activity.id)}>🗑️</button>
-            {/* à venir : nombre d'heures associées */}
+          <li key={activity.id} className="activity-item">
+            <span className="activity-name" style={{ color: activity.color }}>
+              {activity.name}
+            </span>
+            <div className="activity-actions">
+              <button onClick={() => handleEdit(activity.id)}>✏️</button>
+              <button onClick={() => handleDelete(activity.id)}>🗑️</button>
+            </div>
           </li>
         ))}
       </ul>

@@ -8,6 +8,11 @@ interface Props {
   onAssignActivity: (id: string) => void;
   onResetSelection: () => void;
   hasSelection: boolean;
+  hasConflicts: boolean;
+  conflictingSlots: string[];
+  onClearAndAssign: () => void;
+  onForceReplace: () => void;
+  error?: string;
 }
 
 const ActivityActions: React.FC<Props> = ({
@@ -17,6 +22,11 @@ const ActivityActions: React.FC<Props> = ({
   onAssignActivity,
   onResetSelection,
   hasSelection,
+  hasConflicts,
+  conflictingSlots,
+  onClearAndAssign,
+  onForceReplace,
+  error,
 }) => {
   if (!hasSelection) return null;
 
@@ -38,7 +48,9 @@ const ActivityActions: React.FC<Props> = ({
               {act.name}
             </option>
           ))}
+          <option value="__new__">+ Créer une nouvelle activité...</option>
         </select>
+
         <button
           onClick={() => {
             if (selectedActivityId) {
@@ -51,6 +63,23 @@ const ActivityActions: React.FC<Props> = ({
           Valider
         </button>
       </div>
+
+      {hasConflicts && (
+        <div className="conflict-options">
+          <p>
+            ⚠️ {conflictingSlots.length} créneau(x) déjà occupé(s) :<br />
+            {conflictingSlots.join(", ")}
+          </p>
+          <button onClick={onClearAndAssign}>
+            1) Effacer toutes les activités de la sélection
+          </button>
+          <button onClick={onForceReplace}>
+            2) Remplacer les existantes et remplir les cases vides
+          </button>
+        </div>
+      )}
+
+      {error && <p className="error-text">{error}</p>}
 
       <div className="reset-section">
         <button onClick={onResetSelection}>Réinitialiser la sélection</button>

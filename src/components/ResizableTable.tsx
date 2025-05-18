@@ -106,9 +106,13 @@ const ResizableTable: React.FC<ResizableTableProps> = ({
                             isInsideBlock
                               ? (e) => {
                                   e.preventDefault();
-                                  setSelectedSlots(
-                                    new Set(mergedBlock!.slotIds)
-                                  );
+                                  setSelectedSlots((prev) => {
+                                    const updated = new Set(prev);
+                                    mergedBlock!.slotIds.forEach((id) =>
+                                      updated.add(id)
+                                    );
+                                    return updated;
+                                  });
                                 }
                               : handleMouseDown
                           }

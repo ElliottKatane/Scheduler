@@ -7,15 +7,15 @@ import "../CSS/TimeSlotPreview.css";
 
 const TimeSlotPreview: React.FC<TimeSlotPreviewProps> = ({
   selectedSlots,
-  selectedActivityId,
+  // selectedActivityId,
   setSelectedActivityId,
   onAssignActivity,
-  error,
-  conflictingSlots,
-  onForceReplace,
-  onClearAndAssign,
-  hasConflicts,
-  onResetSelection,
+  // error,
+  // conflictingSlots,
+  // onForceReplace,
+  // onClearAndAssign,
+  // hasConflicts,
+  // onResetSelection,
 }) => {
   const [isCreating, setIsCreating] = useState(false);
   const { activities, addActivity } = useContext(ActivityContext)!;
@@ -31,20 +31,18 @@ const TimeSlotPreview: React.FC<TimeSlotPreviewProps> = ({
 
   return (
     <div className="preview-container">
-      <div className="card">
-        <h4>Créneaux sélectionnés</h4>
-        <div className="slot-list">
-          <ul>
-            {mergedSlots.map((slot, index) => (
-              <li key={index}>
-                {slot.day} : {slot.startHour.toString().padStart(2, "0")}h
-                {slot.startMinute === 30 ? "30" : ""} -{" "}
-                {slot.endHour.toString().padStart(2, "0")}h
-                {slot.endMinute === 30 ? "30" : ""}
-              </li>
-            ))}
-          </ul>
-        </div>
+      <h4>Créneaux sélectionnés</h4>
+      <div className="slot-list">
+        <ul>
+          {mergedSlots.map((slot, index) => (
+            <li key={index}>
+              {slot.day} : {slot.startHour.toString().padStart(2, "0")}h
+              {slot.startMinute === 30 ? "30" : ""} -{" "}
+              {slot.endHour.toString().padStart(2, "0")}h
+              {slot.endMinute === 30 ? "30" : ""}
+            </li>
+          ))}
+        </ul>
       </div>
 
       {isCreating && (

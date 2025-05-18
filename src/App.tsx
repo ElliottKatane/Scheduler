@@ -166,29 +166,8 @@ function App() {
               <div className="card">
                 <TimeSlotPreview
                   selectedSlots={selectedSlots}
-                  selectedActivityId={selectedActivityId}
                   setSelectedActivityId={setSelectedActivityId}
                   onAssignActivity={assignActivityToSelectedSlots}
-                  error={error}
-                  pendingAssignment={pendingAssignment}
-                  conflictingSlots={conflictingSlots}
-                  onClearAndAssign={() => {
-                    setSlotToActivityMap((prev) => {
-                      const newMap = new Map(prev);
-                      selectedSlots.forEach((slotId) => newMap.delete(slotId));
-                      return newMap;
-                    });
-                    clearSelection();
-                    setError(null);
-                    setPendingAssignment(null);
-                    setConflictingSlots([]);
-                    setSelectedActivityId("");
-                  }}
-                  onForceReplace={() => {
-                    if (pendingAssignment) applyAssignment(pendingAssignment);
-                  }}
-                  hasConflicts={hasConflicts}
-                  onResetSelection={clearSelection}
                 />
 
                 <ActivityActions
@@ -198,6 +177,22 @@ function App() {
                   onAssignActivity={assignActivityToSelectedSlots}
                   onResetSelection={clearSelection}
                   hasSelection={selectedSlots.size > 0}
+                  hasConflicts={hasConflicts}
+                  conflictingSlots={conflictingSlots}
+                  onClearAndAssign={() => {
+                    setSlotToActivityMap((prev) => {
+                      const newMap = new Map(prev);
+                      selectedSlots.forEach((slotId) => newMap.delete(slotId));
+                      return newMap;
+                    });
+                    setError(null);
+                    setPendingAssignment(null);
+                    setConflictingSlots([]);
+                  }}
+                  onForceReplace={() => {
+                    if (pendingAssignment) applyAssignment(pendingAssignment);
+                  }}
+                  error={error || undefined}
                 />
               </div>
 
