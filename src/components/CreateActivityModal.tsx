@@ -42,8 +42,10 @@ const CreateActivityModal: React.FC<Props> = ({ onClose, onCreate }) => {
             onChange={(e) => setColor(e.target.value)}
           />
         </label>
-        <button onClick={handleSubmit}>Créer</button>
-        <button onClick={onClose}>Annuler</button>
+        <div className="creation-buttons">
+          <button onClick={handleSubmit}>Créer</button>
+          <button onClick={onClose}>Annuler</button>
+        </div>
       </div>
     </div>
   );

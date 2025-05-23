@@ -17,6 +17,7 @@ function App() {
   const activityContext = useContext(ActivityContext);
   if (!activityContext) return null; // ou fallback/chargement si besoin
   const [selectedActivityId, setSelectedActivityId] = useState<string>("");
+  const [isCreating, setIsCreating] = useState(false);
 
   const { activities } = activityContext;
   const { schedules } = useSavedSchedules(); // pour comparer avec les emplois sauvegardés
@@ -193,6 +194,8 @@ function App() {
                     if (pendingAssignment) applyAssignment(pendingAssignment);
                   }}
                   error={error || undefined}
+                  isCreating={isCreating}
+                  setIsCreating={setIsCreating}
                 />
               </div>
 

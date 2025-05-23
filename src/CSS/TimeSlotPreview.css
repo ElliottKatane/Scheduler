@@ -48,3 +48,17 @@
   border: 1px solid #444;
   padding: 1rem;
 }
+/* Alignement horizontal des boutons */
+.action-buttons,
+.creation-buttons {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+/* Forcer les boutons à ne pas dépasser */
+.action-buttons button,
+.creation-buttons button {
+  flex: 1;
+}

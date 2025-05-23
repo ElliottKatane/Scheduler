@@ -102,20 +102,36 @@ const ResizableTable: React.FC<ResizableTableProps> = ({
                               ? activity?.color
                               : undefined,
                           }}
-                          onMouseDown={
-                            isInsideBlock
-                              ? (e) => {
-                                  e.preventDefault();
-                                  setSelectedSlots((prev) => {
-                                    const updated = new Set(prev);
-                                    mergedBlock!.slotIds.forEach((id) =>
-                                      updated.add(id)
-                                    );
-                                    return updated;
-                                  });
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+
+                            if (isInsideBlock && mergedBlock) {
+                              setSelectedSlots((prev) => {
+                                const isAlreadySelected =
+                                  mergedBlock.slotIds.every((id) =>
+                                    prev.has(id)
+                                  );
+
+                                const updated = new Set(prev);
+
+                                if (isAlreadySelected) {
+                                  // Toggle OFF
+                                  mergedBlock.slotIds.forEach((id) =>
+                                    updated.delete(id)
+                                  );
+                                } else {
+                                  // Toggle ON
+                                  mergedBlock.slotIds.forEach((id) =>
+                                    updated.add(id)
+                                  );
                                 }
-                              : handleMouseDown
-                          }
+
+                                return updated;
+                              });
+                            } else {
+                              handleMouseDown(e);
+                            }
+                          }}
                           onMouseEnter={
                             isInsideBlock ? undefined : handleMouseEnter
                           }
