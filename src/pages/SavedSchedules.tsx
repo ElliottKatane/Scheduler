@@ -20,7 +20,7 @@ const SavedSchedules: React.FC<Props> = ({ activities, onLoad }) => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [newName, setNewName] = useState<string>("");
 
-  const handleExport = (s: SavedSchedule) => {
+  const handleExport = (s: SavedSchedule, smart: boolean = false) => {
     const map = new Map(s.data);
 
     setRenderedExport(
@@ -28,6 +28,7 @@ const SavedSchedules: React.FC<Props> = ({ activities, onLoad }) => {
         <ScheduleExportPreview
           slotToActivityMap={map}
           activities={activities}
+          smart={smart}
         />
       </div>
     );
@@ -39,7 +40,7 @@ const SavedSchedules: React.FC<Props> = ({ activities, onLoad }) => {
           .from(element)
           .set({
             margin: 0,
-            filename: `${s.name}.pdf`,
+            filename: `${s.name}${smart ? "_smart" : ""}.pdf`,
             image: { type: "jpeg", quality: 0.98 },
             html2canvas: { scale: 2 },
             jsPDF: { unit: "mm", format: "a4", orientation: "landscape" },
@@ -49,6 +50,7 @@ const SavedSchedules: React.FC<Props> = ({ activities, onLoad }) => {
       }
     }, 100);
   };
+
   const handleRename = (id: string, currentName: string) => {
     setEditingId(id);
     setNewName(currentName);
@@ -91,6 +93,12 @@ const SavedSchedules: React.FC<Props> = ({ activities, onLoad }) => {
             <div className="snippet-actions">
               <button onClick={() => deleteSchedule(s.id)}>Supprimer</button>
               <button onClick={() => handleExport(s)}>Exporter en PDF</button>
+              <button
+                style={{ backgroundColor: "green", color: "white" }}
+                onClick={() => handleExport(s, true)}
+              >
+                Smart Export
+              </button>
               <button onClick={() => handleRename(s.id, s.name)}>
                 Renommer
               </button>
