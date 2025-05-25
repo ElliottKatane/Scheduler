@@ -13,10 +13,12 @@ interface Props {
 }
 
 const SavedSchedules: React.FC<Props> = ({ activities, onLoad }) => {
-  const { schedules, deleteSchedule } = useSavedSchedules();
+  const { schedules, deleteSchedule, updateScheduleName } = useSavedSchedules();
   const [renderedExport, setRenderedExport] = useState<React.ReactNode | null>(
     null
   );
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [newName, setNewName] = useState<string>("");
 
   const handleExport = (s: SavedSchedule) => {
     const map = new Map(s.data);
@@ -36,16 +38,28 @@ const SavedSchedules: React.FC<Props> = ({ activities, onLoad }) => {
         html2pdf()
           .from(element)
           .set({
-            margin: 0.5,
+            margin: 0,
             filename: `${s.name}.pdf`,
             image: { type: "jpeg", quality: 0.98 },
-            html2canvas: { scale: 1.2 },
+            html2canvas: { scale: 2 },
             jsPDF: { unit: "mm", format: "a4", orientation: "landscape" },
           })
           .save()
           .then(() => setRenderedExport(null));
       }
     }, 100);
+  };
+  const handleRename = (id: string, currentName: string) => {
+    setEditingId(id);
+    setNewName(currentName);
+  };
+
+  const confirmRename = (id: string) => {
+    if (newName.trim() !== "") {
+      updateScheduleName(id, newName.trim());
+    }
+    setEditingId(null);
+    setNewName("");
   };
 
   return (
@@ -54,8 +68,18 @@ const SavedSchedules: React.FC<Props> = ({ activities, onLoad }) => {
       <div className="snippet-grid">
         {schedules.map((s) => (
           <div key={s.id} className="snippet-card">
-            <h4>{s.name}</h4>
-
+            {editingId === s.id ? (
+              <input
+                className="rename-input"
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                onBlur={() => confirmRename(s.id)}
+                onKeyDown={(e) => e.key === "Enter" && confirmRename(s.id)}
+                autoFocus
+              />
+            ) : (
+              <h4>{s.name}</h4>
+            )}
             <ScheduleSnippet
               title=""
               slotToActivityMap={new Map(s.data)}
@@ -67,6 +91,9 @@ const SavedSchedules: React.FC<Props> = ({ activities, onLoad }) => {
             <div className="snippet-actions">
               <button onClick={() => deleteSchedule(s.id)}>Supprimer</button>
               <button onClick={() => handleExport(s)}>Exporter en PDF</button>
+              <button onClick={() => handleRename(s.id, s.name)}>
+                Renommer
+              </button>
             </div>
           </div>
         ))}

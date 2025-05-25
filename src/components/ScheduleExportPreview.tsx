@@ -1,5 +1,6 @@
 import { WEEK_DAYS, TIME_SLOTS } from "../constants";
 import { Activity } from "../types";
+import { mergeTimeSlots } from "../utils/mergeTimeSlots";
 import "../CSS/ScheduleExportPreview.css";
 
 interface Props {
@@ -11,65 +12,86 @@ const ScheduleExportPreview: React.FC<Props> = ({
   slotToActivityMap,
   activities,
 }) => {
-  const getColor = (slotId: string) => {
-    const activityId = slotToActivityMap.get(slotId);
-    const activity = activities.find((a) => a.id === activityId);
-    return activity?.color || "#fff";
-  };
+  const merged = mergeTimeSlots(slotToActivityMap);
+  const slotToMerged = new Map<string, (typeof merged)[0]>();
+  const startSlotIds = new Set<string>();
 
-  const getLabel = (slotId: string) => {
-    const activityId = slotToActivityMap.get(slotId);
-    const activity = activities.find((a) => a.id === activityId);
-    return activity?.name || "";
-  };
+  merged.forEach((block) => {
+    block.slotIds.forEach((id) => slotToMerged.set(id, block));
+    startSlotIds.add(block.slotIds[0]);
+  });
+
+  const getActivity = (id: string | undefined) =>
+    activities.find((a) => a.id === id) || null;
+
+  const minutes = ["00", "30"];
 
   return (
-    <div id="full-export">
-      <table>
-        <thead>
-          <tr>
-            <th>Heures</th>
-            {WEEK_DAYS.map((day, i) => (
-              <th key={i}>{day}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {TIME_SLOTS.map((hour) => (
-            <tr key={hour}>
-              <td className="hour-cell">{hour}h</td>
-              {WEEK_DAYS.map((_, dayIndex) => {
-                const slotId1 = `${hour}-00-${dayIndex}`;
-                const slotId2 = `${hour}-30-${dayIndex}`;
-
-                const label1 = getLabel(slotId1);
-                const label2 = getLabel(slotId2);
-                const color1 = getColor(slotId1);
-                const color2 = getColor(slotId2);
-
-                const isSame = label1 === label2 && label1 !== "";
-
-                return (
-                  <td
-                    key={`${hour}-${dayIndex}`}
-                    style={{
-                      background: isSame
-                        ? color1
-                        : `linear-gradient(to bottom, ${color1} 50%, ${color2} 50%)`,
-                      fontSize: "8px",
-                      padding: "2px",
-                      color: "#000",
-                    }}
-                  >
-                    {label1 && <div>{label1}</div>}
-                    {!isSame && label2 && <div>{label2}</div>}
-                  </td>
-                );
-              })}
+    <div id="pdf-wrapper">
+      <div id="full-export">
+        <table>
+          <thead>
+            <tr>
+              <th>Heures</th>
+              {WEEK_DAYS.map((day, i) => (
+                <th key={i}>{day}</th>
+              ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {TIME_SLOTS.flatMap((hour) =>
+              minutes.map((minute, minIndex) => {
+                const label = minIndex === 0 ? `${hour}h` : "";
+                return (
+                  <tr key={`${hour}-${minute}`}>
+                    <td className="hour-cell">{label}</td>
+                    {WEEK_DAYS.map((_, dayIndex) => {
+                      const slotId = `${hour}-${minute}-${dayIndex}`;
+                      const mergedBlock = slotToMerged.get(slotId);
+                      const isStart = startSlotIds.has(slotId);
+                      const activityId = slotToActivityMap.get(slotId);
+                      const activity = getActivity(activityId);
+                      const isInsideBlock =
+                        mergedBlock?.slotIds.includes(slotId);
+
+                      const isLastInBlock =
+                        isInsideBlock &&
+                        mergedBlock?.slotIds[mergedBlock.slotIds.length - 1] ===
+                          slotId;
+
+                      const className =
+                        "half-slot" +
+                        (isInsideBlock && !isStart ? " no-top-border" : "") +
+                        (isInsideBlock && !isLastInBlock
+                          ? " no-bottom-border"
+                          : "");
+
+                      return (
+                        <td
+                          key={slotId}
+                          className={className}
+                          style={{
+                            backgroundColor: isInsideBlock
+                              ? activity?.color
+                              : "#fff",
+                            color: "#000",
+                            fontSize: "8px",
+                            padding: "2px",
+                          }}
+                        >
+                          {isStart && activity ? (
+                            <div>{activity.name}</div>
+                          ) : null}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };

@@ -1,55 +1,36 @@
 #full-export {
-  padding: 1rem;
-  font-family: sans-serif;
-  font-size: 12px;
+  font-size: 7px;
+  padding: 0.5rem;
 }
+
 #full-export table {
   border-collapse: collapse;
   width: 100%;
-  font-size: 10px;
+  font-size: 7px;
+  table-layout: fixed;
 }
 
 #full-export th,
 #full-export td {
   border: 1px solid #ccc;
-  padding: 2px;
-  height: 25px;
+  padding: 1px;
+  height: 18px;
+  line-height: 1.1;
   text-align: center;
   vertical-align: middle;
+  word-wrap: break-word;
 }
 
 #full-export .hour-cell {
-  font-weight: bold;
   background-color: #e1e1e1;
-  text-align: center;
-  width: 40px;
+  font-weight: bold;
+  width: 35px;
   white-space: nowrap;
 }
-
-#full-export th {
-  background-color: #e1e1e1;
-  font-weight: bold;
+#full-export td.half-slot.no-top-border {
+  border-top: none !important;
 }
 
-#full-export td {
-  height: 30px;
-  min-width: 80px;
-}
-
-/* Print-specific rules */
-@media print {
-  body {
-    -webkit-print-color-adjust: exact !important;
-  }
-
-  #full-export {
-    page-break-inside: avoid !important;
-  }
-
-  table,
-  tr,
-  td,
-  th {
-    page-break-inside: avoid !important;
-  }
+#full-export td.half-slot.no-bottom-border {
+  border-bottom: none !important;
 }

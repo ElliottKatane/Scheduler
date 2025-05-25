@@ -6,7 +6,8 @@ interface SavedSchedulesContextType {
   schedules: SavedSchedule[];
   addSchedule: (schedule: SavedSchedule) => void;
   deleteSchedule: (id: string) => void;
-  updateSchedule: (id: string, data: Map<string, string>) => void; // ← CORRECTION ICI
+  updateSchedule: (id: string, data: Map<string, string>) => void;
+  updateScheduleName: (id: string, newName: string) => void;
 }
 
 export const SavedSchedulesContext =
@@ -59,10 +60,21 @@ export const SavedSchedulesProvider = ({
       )
     );
   };
+  const updateScheduleName = (id: string, newName: string) => {
+    setSchedules((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, name: newName } : s))
+    );
+  };
 
   return (
     <SavedSchedulesContext.Provider
-      value={{ schedules, addSchedule, deleteSchedule, updateSchedule }}
+      value={{
+        schedules,
+        addSchedule,
+        deleteSchedule,
+        updateSchedule,
+        updateScheduleName,
+      }}
     >
       {children}
     </SavedSchedulesContext.Provider>

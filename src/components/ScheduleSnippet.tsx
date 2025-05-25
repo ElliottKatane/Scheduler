@@ -19,7 +19,7 @@ const ScheduleSnippet: React.FC<Props> = ({
 }) => {
   const getColor = (activityId: string | undefined) => {
     const activity = activities.find((a) => a.id === activityId);
-    return activity?.color || "#ff00ff";
+    return activity?.color || "#ffffff"; // Default to white if no activity found
   };
 
   const merged = enableMergedView ? mergeTimeSlots(slotToActivityMap) : [];
