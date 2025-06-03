@@ -34,6 +34,12 @@ const Navbar: React.FC<NavbarProps> = ({ onTabChange }) => {
         Mes emplois du temps sauvegardés
       </button>
       <button
+        className={activeTab === "Livres / Films" ? "active" : ""}
+        onClick={() => handleTabClick("Livres / Films")}
+      >
+        Livres / Films
+      </button>
+      <button
         className={activeTab === "Debug" ? "active" : ""}
         onClick={() => handleTabClick("Debug")}
       >
