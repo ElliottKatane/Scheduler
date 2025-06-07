@@ -5,7 +5,7 @@ import ScheduleSnippet from "../components/ScheduleSnippet";
 import ScheduleExportPreview from "../components/ScheduleExportPreview";
 import { Activity, SavedSchedule } from "../types";
 import { useSavedSchedules } from "../context/SavedSchedulesContext";
-import "../CSS/SavedSchedules.css";
+import Button from "../UI/Button";
 
 interface Props {
   activities: Activity[];
@@ -65,14 +65,20 @@ const SavedSchedules: React.FC<Props> = ({ activities, onLoad }) => {
   };
 
   return (
-    <div className="saved-schedules">
-      <h3>Mes emplois du temps sauvegardés</h3>
-      <div className="snippet-grid">
+    <div className="saved-schedules p-4">
+      <h3 className="text-xl font-bold mb-4">
+        Mes emplois du temps sauvegardés
+      </h3>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {schedules.map((s) => (
-          <div key={s.id} className="snippet-card">
+          <div
+            key={s.id}
+            className="bg-gray-900 p-4 rounded-lg shadow-lg w-full max-w-[400px] text-center overflow-hidden flex flex-col items-center space-y-4"
+          >
             {editingId === s.id ? (
               <input
-                className="rename-input"
+                className="border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-center text-lg font-semibold w-full"
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
                 onBlur={() => confirmRename(s.id)}
@@ -80,32 +86,40 @@ const SavedSchedules: React.FC<Props> = ({ activities, onLoad }) => {
                 autoFocus
               />
             ) : (
-              <h4>{s.name}</h4>
+              <h4 className="text-lg font-semibold">{s.name}</h4>
             )}
-            <ScheduleSnippet
-              title=""
-              slotToActivityMap={new Map(s.data)}
-              activities={activities}
-              onClick={() => onLoad(s.data, s.id, s.name)}
-              enableMergedView={true}
-            />
 
-            <div className="snippet-actions">
-              <button onClick={() => deleteSchedule(s.id)}>Supprimer</button>
-              <button onClick={() => handleExport(s)}>Exporter en PDF</button>
-              <button
-                style={{ backgroundColor: "green", color: "white" }}
-                onClick={() => handleExport(s, true)}
-              >
+            <div className="w-full max-w-full overflow-x-auto scale-[0.8] origin-top">
+              <ScheduleSnippet
+                title=""
+                slotToActivityMap={new Map(s.data)}
+                activities={activities}
+                onClick={() => onLoad(s.data, s.id, s.name)}
+                enableMergedView={true}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 w-full">
+              <Button variant="danger" onClick={() => deleteSchedule(s.id)}>
+                Supprimer
+              </Button>
+              <Button variant="primary" onClick={() => handleExport(s)}>
+                Exporter en PDF
+              </Button>
+              <Button variant="secondary" onClick={() => handleExport(s, true)}>
                 Smart Export
-              </button>
-              <button onClick={() => handleRename(s.id, s.name)}>
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() => handleRename(s.id, s.name)}
+              >
                 Renommer
-              </button>
+              </Button>
             </div>
           </div>
         ))}
       </div>
+
       {renderedExport &&
         createPortal(
           renderedExport,

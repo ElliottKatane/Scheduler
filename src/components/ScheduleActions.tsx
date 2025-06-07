@@ -2,7 +2,6 @@ import { SavedSchedule } from "../types";
 import { useEffect, useState } from "react";
 import { useSavedSchedules } from "../context/SavedSchedulesContext";
 import { useCurrentSchedule } from "../context/CurrentScheduleContext";
-import "../CSS/ScheduleActions.css"; // ajoute ça en haut
 
 interface Props {
   slotToActivityMap: Map<string, string>;
@@ -69,15 +68,34 @@ const ScheduleActions: React.FC<Props> = ({
   };
 
   return (
-    <div className="schedule-actions">
-      <div className="action-group">
-        <button onClick={handleSaveNew}>Save as...</button>
+    <div className="rounded-xl border border-gray-300 bg-white dark:bg-gray-800 p-4 shadow-sm space-y-4">
+      <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">
+        Actions sur l'emploi du temps
+      </h2>
+      <div className="flex flex-col space-y-2">
+        <button
+          onClick={handleSaveNew}
+          className="px-4 py-2 rounded-md bg-green-600 text-white hover:bg-green-700"
+        >
+          Save as...
+        </button>
+
         {currentSchedule && hasUnsavedChanges && (
-          <button onClick={handleUpdateExisting}>
+          <button
+            onClick={handleUpdateExisting}
+            className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700"
+          >
             Mettre à jour cet emploi du temps
           </button>
         )}
-        <button onClick={handleClear}>Nettoyer l'emploi du temps</button>
+
+        <button
+          onClick={handleClear}
+          className="px-4 py-2 rounded-md bg-red-600 text-white hover:bg-red-700"
+        >
+          Nettoyer l'emploi du temps
+        </button>
+
         {!hasUnsavedChanges && (
           <button
             onClick={() => {
@@ -89,6 +107,7 @@ const ScheduleActions: React.FC<Props> = ({
               setConflictingSlots([]);
               setHasConflicts(false);
             }}
+            className="px-4 py-2 rounded-md bg-gray-600 text-white hover:bg-gray-700"
           >
             New Schedule
           </button>

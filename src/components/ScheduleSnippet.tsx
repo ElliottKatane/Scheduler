@@ -36,7 +36,7 @@ const ScheduleSnippet: React.FC<Props> = ({
 
   return (
     <div
-      className="schedule-snippet"
+      className="snippet-grid grid grid-cols-1 md:grid-cols-2 gap-6"
       onClick={onClick}
       style={{ cursor: onClick ? "pointer" : "default" }}
     >

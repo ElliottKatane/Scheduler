@@ -164,53 +164,49 @@ function App() {
       <div className="container-main">
         {activeTab === "Emploi du temps" && (
           <div className="main-content">
-            <div className="sidebar">
-              <div className="card">
-                <TimeSlotPreview
-                  selectedSlots={selectedSlots}
-                  setSelectedActivityId={setSelectedActivityId}
-                  onAssignActivity={assignActivityToSelectedSlots}
-                />
+            <div className="sidebar flex flex-col space-y-4 p-4 bg-transparent overflow-y-auto max-h-[calc(100vh-6rem)]">
+              <TimeSlotPreview
+                selectedSlots={selectedSlots}
+                setSelectedActivityId={setSelectedActivityId}
+                onAssignActivity={assignActivityToSelectedSlots}
+              />
 
-                <ActivityActions
-                  activities={activities}
-                  selectedActivityId={selectedActivityId}
-                  setSelectedActivityId={setSelectedActivityId}
-                  onAssignActivity={assignActivityToSelectedSlots}
-                  onResetSelection={clearSelection}
-                  hasSelection={selectedSlots.size > 0}
-                  hasConflicts={hasConflicts}
-                  conflictingSlots={conflictingSlots}
-                  onClearAndAssign={() => {
-                    setSlotToActivityMap((prev) => {
-                      const newMap = new Map(prev);
-                      selectedSlots.forEach((slotId) => newMap.delete(slotId));
-                      return newMap;
-                    });
-                    setError(null);
-                    setPendingAssignment(null);
-                    setConflictingSlots([]);
-                  }}
-                  onForceReplace={() => {
-                    if (pendingAssignment) applyAssignment(pendingAssignment);
-                  }}
-                  error={error || undefined}
-                  isCreating={isCreating}
-                  setIsCreating={setIsCreating}
-                />
-              </div>
+              <ActivityActions
+                activities={activities}
+                selectedActivityId={selectedActivityId}
+                setSelectedActivityId={setSelectedActivityId}
+                onAssignActivity={assignActivityToSelectedSlots}
+                onResetSelection={clearSelection}
+                hasSelection={selectedSlots.size > 0}
+                hasConflicts={hasConflicts}
+                conflictingSlots={conflictingSlots}
+                onClearAndAssign={() => {
+                  setSlotToActivityMap((prev) => {
+                    const newMap = new Map(prev);
+                    selectedSlots.forEach((slotId) => newMap.delete(slotId));
+                    return newMap;
+                  });
+                  setError(null);
+                  setPendingAssignment(null);
+                  setConflictingSlots([]);
+                }}
+                onForceReplace={() => {
+                  if (pendingAssignment) applyAssignment(pendingAssignment);
+                }}
+                error={error || undefined}
+                isCreating={isCreating}
+                setIsCreating={setIsCreating}
+              />
 
-              <div className="card">
-                <ScheduleActions
-                  slotToActivityMap={slotToActivityMap}
-                  clearSelection={clearSelection}
-                  setSlotToActivityMap={setSlotToActivityMap}
-                  setSelectedActivityId={setSelectedActivityId}
-                  setPendingAssignment={setPendingAssignment}
-                  setConflictingSlots={setConflictingSlots}
-                  setHasConflicts={setHasConflicts}
-                />
-              </div>
+              <ScheduleActions
+                slotToActivityMap={slotToActivityMap}
+                clearSelection={clearSelection}
+                setSlotToActivityMap={setSlotToActivityMap}
+                setSelectedActivityId={setSelectedActivityId}
+                setPendingAssignment={setPendingAssignment}
+                setConflictingSlots={setConflictingSlots}
+                setHasConflicts={setHasConflicts}
+              />
             </div>
 
             <div className="calendar-section">

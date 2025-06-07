@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import "../CSS/Navbar.css";
 
 interface NavbarProps {
   onTabChange?: (tab: string) => void;
@@ -13,38 +12,30 @@ const Navbar: React.FC<NavbarProps> = ({ onTabChange }) => {
     onTabChange?.(tab);
   };
 
+  const tabs = [
+    "Emploi du temps",
+    "Gérer les activités",
+    "Mes emplois du temps",
+    "Livres / Films",
+    "Debug",
+  ];
+
   return (
-    <nav>
-      <button
-        className={activeTab === "Emploi du temps" ? "active" : ""}
-        onClick={() => handleTabClick("Emploi du temps")}
-      >
-        Emploi du temps
-      </button>
-      <button
-        className={activeTab === "Gérer les activités" ? "active" : ""}
-        onClick={() => handleTabClick("Gérer les activités")}
-      >
-        Gérer les activités
-      </button>
-      <button
-        className={activeTab === "Mes emplois du temps" ? "active" : ""}
-        onClick={() => handleTabClick("Mes emplois du temps")}
-      >
-        Mes emplois du temps sauvegardés
-      </button>
-      <button
-        className={activeTab === "Livres / Films" ? "active" : ""}
-        onClick={() => handleTabClick("Livres / Films")}
-      >
-        Livres / Films
-      </button>
-      <button
-        className={activeTab === "Debug" ? "active" : ""}
-        onClick={() => handleTabClick("Debug")}
-      >
-        Debug
-      </button>
+    <nav className="flex flex-wrap gap-2 p-4 bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200 dark:border-gray-700">
+      {tabs.map((tab) => (
+        <button
+          key={tab}
+          onClick={() => handleTabClick(tab)}
+          className={`px-4 py-2 rounded-md text-sm font-medium
+            ${
+              activeTab === tab
+                ? "bg-blue-600 text-white"
+                : "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600"
+            }`}
+        >
+          {tab}
+        </button>
+      ))}
     </nav>
   );
 };
