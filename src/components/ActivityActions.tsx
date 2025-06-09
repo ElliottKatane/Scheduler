@@ -92,7 +92,7 @@ const ActivityActions: React.FC<Props> = ({
               Valider
             </Button>
             <Button variant="secondary" onClick={onResetSelection}>
-              Réinitialiser
+              Lâcher la sélection
             </Button>
           </div>
         </div>

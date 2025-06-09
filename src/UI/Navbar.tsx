@@ -2,9 +2,10 @@ import React, { useState } from "react";
 
 interface NavbarProps {
   onTabChange?: (tab: string) => void;
+  currentSchedule?: { id: string; name: string } | null;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ onTabChange }) => {
+const Navbar: React.FC<NavbarProps> = ({ onTabChange, currentSchedule }) => {
   const [activeTab, setActiveTab] = useState("Emploi du temps");
 
   const handleTabClick = (tab: string) => {
@@ -36,6 +37,14 @@ const Navbar: React.FC<NavbarProps> = ({ onTabChange }) => {
           {tab}
         </button>
       ))}
+      {currentSchedule && (
+        <div className="text-sm text-gray-600 dark:text-gray-300 ml-4">
+          <p>
+            <strong>Édition :</strong> {currentSchedule.name} (ID:{" "}
+            {currentSchedule.id})
+          </p>
+        </div>
+      )}
     </nav>
   );
 };

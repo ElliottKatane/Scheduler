@@ -159,7 +159,7 @@ function App() {
 
   return (
     <section>
-      <Navbar onTabChange={setActiveTab} />
+      <Navbar onTabChange={setActiveTab} currentSchedule={currentSchedule} />
 
       <div className="container-main">
         {activeTab === "Emploi du temps" && (
