@@ -9,9 +9,8 @@ interface CurrentScheduleContextType {
   hasChanges: (currentData: Map<string, string>) => boolean;
 }
 
-const CurrentScheduleContext = createContext<CurrentScheduleContextType | null>(
-  null
-);
+export const CurrentScheduleContext =
+  createContext<CurrentScheduleContextType | null>(null);
 
 export const CurrentScheduleProvider = ({
   children,

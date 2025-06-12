@@ -14,7 +14,15 @@ const ManageActivities = () => {
   });
   const [editingId, setEditingId] = useState<string | null>(null);
 
-  const predefinedLabels = ["LRDG", "Perso", "Pro", "Autre", "Santé", "Sport"];
+  const predefinedLabels = [
+    "LRDG",
+    "Perso",
+    "Pro",
+    "Autre",
+    "Santé",
+    "Sport",
+    "Preply",
+  ];
 
   useEffect(() => {
     localStorage.setItem("activities", JSON.stringify(activities));

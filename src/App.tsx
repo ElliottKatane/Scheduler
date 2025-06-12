@@ -14,6 +14,7 @@ import ResizableTable from "./components/ResizableTable";
 import ActivityActions from "./components/ActivityActions";
 import "./App.css";
 import BooksAndMovies from "./components/BooksAndMovies";
+import HoursSummary from "./components/HoursSummary";
 function App() {
   const activityContext = useContext(ActivityContext);
   if (!activityContext) return null; // ou fallback/chargement si besoin
@@ -207,6 +208,8 @@ function App() {
                 setConflictingSlots={setConflictingSlots}
                 setHasConflicts={setHasConflicts}
               />
+
+              <HoursSummary />
             </div>
 
             <div className="calendar-section">
@@ -249,15 +252,6 @@ function App() {
 
         {activeTab === "Debug" && <LocalStorageViewer />}
       </div>
-
-      {currentSchedule && (
-        <div className="current-schedule-info">
-          <p>
-            <strong>Édition :</strong> {currentSchedule.name}
-          </p>
-          <p>ID : {currentSchedule.id}</p>
-        </div>
-      )}
     </section>
   );
 }
