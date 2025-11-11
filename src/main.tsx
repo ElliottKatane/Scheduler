@@ -4,6 +4,7 @@ import { ActivityProvider } from "./context/ActivityContext";
 import { SavedSchedulesProvider } from "./context/SavedSchedulesContext";
 import { CurrentScheduleProvider } from "./context/CurrentScheduleContext";
 import { BooksAndMoviesProvider } from "./context/BooksAndMoviesContext";
+import { LabelsProvider } from "./context/LabelsContext";
 import "./index.css";
 import App from "./App.tsx";
 
@@ -13,7 +14,9 @@ createRoot(document.getElementById("root")!).render(
       <SavedSchedulesProvider>
         <CurrentScheduleProvider>
           <BooksAndMoviesProvider>
-            <App />
+            <LabelsProvider>
+              <App />
+            </LabelsProvider>
           </BooksAndMoviesProvider>
         </CurrentScheduleProvider>
       </SavedSchedulesProvider>

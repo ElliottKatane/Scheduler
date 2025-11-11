@@ -1,7 +1,6 @@
-import React from "react";
+import React, { useContext, useEffect, useMemo } from "react";
 import { Activity } from "../types";
 import CreateActivityModal from "./CreateActivityModal";
-import { useContext } from "react";
 import { ActivityContext } from "../context/ActivityContext";
 import Button from "../UI/Button";
 
@@ -42,6 +41,20 @@ const ActivityActions: React.FC<Props> = ({
 
   if (!hasSelection) return null;
 
+  // 1) Garder seulement les activités visibles (non masquées)
+  const visibleActivities = useMemo(
+    () => activities.filter((a) => !a.hidden),
+    [activities]
+  );
+
+  // 2) Si l’activité sélectionnée devient masquée ou n’existe plus, on reset
+  useEffect(() => {
+    const selected = activities.find((a) => a.id === selectedActivityId);
+    if (!selected || selected.hidden) {
+      setSelectedActivityId("");
+    }
+  }, [activities, selectedActivityId, setSelectedActivityId]);
+
   const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
     if (value === "__new__") {
@@ -58,6 +71,8 @@ const ActivityActions: React.FC<Props> = ({
     }
   };
 
+  const noVisible = visibleActivities.length === 0;
+
   return (
     <>
       <div className="rounded-xl border border-gray-300 bg-white dark:bg-gray-800 p-4 shadow-sm space-y-4">
@@ -68,6 +83,7 @@ const ActivityActions: React.FC<Props> = ({
           >
             Associer à une activité :
           </label>
+
           <select
             id="activity-select"
             value={selectedActivityId}
@@ -75,13 +91,23 @@ const ActivityActions: React.FC<Props> = ({
             className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">-- Choisir une activité --</option>
-            {activities.map((act) => (
+
+            {/* 3) N’afficher que les activités non masquées */}
+            {visibleActivities.map((act) => (
               <option key={act.id} value={act.id}>
                 {act.name}
               </option>
             ))}
+
             <option value="__new__">+ Créer une nouvelle activité...</option>
           </select>
+
+          {noVisible && (
+            <p className="text-xs text-gray-500">
+              Aucune activité visible. Créez une activité ou réactivez-en une
+              dans Gérer les activités.
+            </p>
+          )}
 
           <div className="flex space-x-2 pt-2">
             <Button

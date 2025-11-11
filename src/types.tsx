@@ -1,8 +1,13 @@
+export type Currency = "CAD" | "USD" | "EUR";
+
 export interface Activity {
   name: string;
   color: string;
   id: string;
   labels?: string[];
+  hidden?: boolean; // nouveau: permet de "cacher" l’activité
+  hourlyRate?: number; // nouveau: taux horaire
+  currency?: Currency; // optionnel: devise
 }
 export interface TimeSlotPreviewProps {
   selectedSlots: Set<string>;
