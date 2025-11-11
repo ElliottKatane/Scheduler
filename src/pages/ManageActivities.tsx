@@ -16,13 +16,25 @@ const ManageActivities = () => {
     toggleHidden,
   } = activityContext;
   const { labels, addLabel, deleteLabel } = labelsContext;
+  // en haut de ManageActivities.tsx
+  const [hourlyRateInput, setHourlyRateInput] = useState<string>(""); // UI string
 
-  const [newActivity, setNewActivity] = useState({
+  type NewActivityForm = {
+    name: string;
+    color: string;
+    labels: string[];
+    hidden: boolean;
+    hourlyRate?: number; // number | undefined
+  };
+
+  const [newActivity, setNewActivity] = useState<NewActivityForm>({
     name: "",
     color: "",
-    labels: [] as string[],
+    labels: [],
     hidden: false,
+    hourlyRate: undefined,
   });
+
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const [newLabelInput, setNewLabelInput] = useState("");
@@ -40,6 +52,7 @@ const ManageActivities = () => {
         name: newActivity.name,
         color: newActivity.color,
         labels: newActivity.labels,
+        hourlyRate: newActivity.hourlyRate,
       });
       setEditingId(null);
     } else {
@@ -48,10 +61,17 @@ const ManageActivities = () => {
         name: newActivity.name,
         color: newActivity.color,
         labels: newActivity.labels,
+        hourlyRate: newActivity.hourlyRate,
       });
     }
 
-    setNewActivity({ name: "", color: "", labels: [], hidden: false });
+    setNewActivity({
+      name: "",
+      color: "",
+      labels: [],
+      hidden: false,
+      hourlyRate: undefined,
+    });
   };
 
   const handleDelete = (id: string) => {
@@ -66,15 +86,16 @@ const ManageActivities = () => {
 
   const handleEdit = (id: string) => {
     const act = activities.find((a) => a.id === id);
-    if (act) {
-      setNewActivity({
-        name: act.name,
-        color: act.color,
-        labels: act.labels || [],
-        hidden: act.hidden ?? false,
-      });
-      setEditingId(id);
-    }
+    if (!act) return;
+    setNewActivity({
+      name: act.name,
+      color: act.color,
+      labels: act.labels ?? [],
+      hidden: act.hidden ?? false,
+      hourlyRate: act.hourlyRate, // number | undefined
+    });
+    setHourlyRateInput(act.hourlyRate != null ? String(act.hourlyRate) : "");
+    setEditingId(id);
   };
 
   return (
@@ -189,6 +210,46 @@ const ManageActivities = () => {
           </div>
         </div>
 
+        {/* Nouveau: Taux horaire et devise */}
+        <div className="flex flex-col">
+          <label className="text-sm font-medium text-gray-300 mb-1">
+            Taux horaire :
+          </label>
+          <input
+            type="number"
+            step="0.01"
+            min="0"
+            value={hourlyRateInput} // string, les flèches fonctionnent
+            onChange={(e) => setHourlyRateInput(e.target.value)}
+            onBlur={() => {
+              const v = hourlyRateInput.trim();
+              const n = v === "" ? undefined : Number(v);
+              setNewActivity({
+                ...newActivity,
+                hourlyRate: Number.isNaN(n as number) ? undefined : n,
+              });
+              if (Number.isNaN(n as number)) setHourlyRateInput(""); // nettoie si invalide
+            }}
+            className="w-28 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-black dark:text-white px-2 py-1"
+          />
+        </div>
+
+        {/* Nouveau: Masquer cette activité */}
+        <div className="flex items-center gap-2">
+          <input
+            id="hidden"
+            type="checkbox"
+            checked={!!newActivity.hidden}
+            onChange={(e) =>
+              setNewActivity({ ...newActivity, hidden: e.target.checked })
+            }
+            className="w-4 h-4"
+          />
+          <label htmlFor="hidden" className="text-sm font-medium text-gray-300">
+            Masquer cette activité
+          </label>
+        </div>
+
         {/* Nouveau: Masquer cette activité */}
         <div className="flex items-center gap-2">
           <input
@@ -247,7 +308,6 @@ const ManageActivities = () => {
         ))}
       </div>
 
-      <h4 className="text-lg font-bold text-white">Activités enregistrées</h4>
       <ul className="space-y-2">
         {activities.map((activity) => (
           <li
@@ -264,6 +324,7 @@ const ManageActivities = () => {
                 {activity.name}
               </span>
 
+              {/* affichage des labels */}
               {activity.labels?.map((label) => (
                 <span
                   key={label}
@@ -273,22 +334,28 @@ const ManageActivities = () => {
                 </span>
               ))}
 
+              {/* badge masquée */}
               {activity.hidden && (
                 <span className="px-2 py-0.5 border border-yellow-600 rounded text-xs text-yellow-400">
                   masquée
                 </span>
               )}
+
+              {/* taux horaire */}
+              <span className="text-xs text-gray-400 border border-gray-500 rounded px-2 py-0.5">
+                {activity.hourlyRate != null
+                  ? `${activity.hourlyRate.toFixed(2)} /h`
+                  : "taux non assigné"}
+              </span>
             </div>
 
             <div className="flex gap-2">
-              {/* Nouveau: bascule Afficher/Masquer */}
               <button
                 onClick={() => toggleHidden(activity.id)}
                 className="text-sm px-2 py-1 rounded border border-gray-500 hover:bg-gray-700"
               >
                 {activity.hidden ? "Afficher" : "Masquer"}
               </button>
-
               <button
                 onClick={() => handleEdit(activity.id)}
                 className="text-sm px-2 py-1 rounded border border-orange-500 hover:bg-orange-600"
