@@ -24,27 +24,49 @@ const CreateActivityModal: React.FC<Props> = ({ onClose, onCreate }) => {
 
   return (
     <div className="modal-overlay">
-      <div className="modal">
-        <h4>Nouvelle activité</h4>
-        <label>
-          Nom :
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-        </label>
-        <label>
-          Couleur :
-          <input
-            type="color"
-            value={color}
-            onChange={(e) => setColor(e.target.value)}
-          />
-        </label>
-        <div className="creation-buttons">
-          <button onClick={handleSubmit}>Créer</button>
-          <button onClick={onClose}>Annuler</button>
+      <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-5 w-80 space-y-4 shadow-lg">
+          <h4 className="text-lg font-semibold">Nouvelle activité</h4>
+
+          <label className="flex flex-col gap-1 text-sm">
+            <span>Nom</span>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="px-2 py-1 rounded-md border border-gray-300 dark:border-gray-600 
+                   bg-white dark:bg-gray-900 
+                   focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </label>
+
+          <label className="flex flex-col gap-1 text-sm">
+            <span>Couleur</span>
+            <input
+              type="color"
+              value={color}
+              onChange={(e) => setColor(e.target.value)}
+              className="h-9 rounded-md border border-gray-300 dark:border-gray-600 
+                   bg-transparent cursor-pointer"
+            />
+          </label>
+
+          <div className="flex justify-end gap-2 pt-2">
+            <button
+              onClick={onClose}
+              className="px-3 py-1 rounded-md border border-gray-400 dark:border-gray-600
+                   text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
+              Annuler
+            </button>
+            <button
+              onClick={handleSubmit}
+              className="px-3 py-1 rounded-md border border-blue-500 text-blue-600
+                   text-sm hover:bg-blue-50 dark:hover:bg-blue-900/20"
+            >
+              Créer
+            </button>
+          </div>
         </div>
       </div>
     </div>

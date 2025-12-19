@@ -81,6 +81,7 @@ function App() {
   );
   const [hasConflicts, setHasConflicts] = useState(false);
   const [conflictingSlots, setConflictingSlots] = useState<string[]>([]);
+  const [isHoursOpen, setIsHoursOpen] = useState(false);
 
   const [error, setError] = useState<string | null>(null);
 
@@ -171,7 +172,6 @@ function App() {
                 setSelectedActivityId={setSelectedActivityId}
                 onAssignActivity={assignActivityToSelectedSlots}
               />
-
               <ActivityActions
                 activities={activities}
                 selectedActivityId={selectedActivityId}
@@ -198,7 +198,6 @@ function App() {
                 isCreating={isCreating}
                 setIsCreating={setIsCreating}
               />
-
               <ScheduleActions
                 slotToActivityMap={slotToActivityMap}
                 clearSelection={clearSelection}
@@ -208,9 +207,40 @@ function App() {
                 setConflictingSlots={setConflictingSlots}
                 setHasConflicts={setHasConflicts}
               />
-
-              <HoursSummary />
+              <button
+                onClick={() => setIsHoursOpen(true)}
+                className="w-full rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm font-semibold text-center hover:bg-gray-50 dark:hover:bg-gray-700"
+              >
+                Résumé des heures
+              </button>
             </div>
+            {isHoursOpen && (
+              <div
+                className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+                onMouseDown={() => setIsHoursOpen(false)}
+              >
+                <div
+                  className="w-full max-w-3xl rounded-2xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg"
+                  onMouseDown={(e) => e.stopPropagation()}
+                >
+                  <div className="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 px-5 py-3">
+                    <h3 className="text-lg font-semibold">
+                      Résumé des heures et coûts
+                    </h3>
+                    <button
+                      onClick={() => setIsHoursOpen(false)}
+                      className="rounded-md border border-gray-300 dark:border-gray-600 px-3 py-1 text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
+                    >
+                      Fermer
+                    </button>
+                  </div>
+
+                  <div className="p-5">
+                    <HoursSummary variant="modal" />
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="calendar-section">
               <ResizableTable
