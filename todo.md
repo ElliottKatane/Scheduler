@@ -9,3 +9,7 @@
 => Nombre d'heures de travail
 => Nombre d'heures totales
 => Ajouter "labels" ? #Work, #Leisure, etc ? Ou juste "work" quand c'est work, du coup on coche.
+
+# faire en sorte de "cacher" les activités dont je me servirais plus; gérable depuis le menu "gérer les activités"
+
+# depuis ce menu aussi, ajouter potentiellement un taux horaire. faire la multiplication des heures par ce taux horaire
