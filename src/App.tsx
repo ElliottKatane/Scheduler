@@ -165,55 +165,63 @@ function App() {
 
       <div className="container-main">
         {activeTab === "Emploi du temps" && (
-          <div className="main-content">
-            <div className="sidebar flex flex-col space-y-4 p-4 bg-transparent overflow-y-auto max-h-[calc(100vh-6rem)]">
-              <TimeSlotPreview
-                selectedSlots={selectedSlots}
-                setSelectedActivityId={setSelectedActivityId}
-                onAssignActivity={assignActivityToSelectedSlots}
-              />
-              <ActivityActions
-                activities={activities}
-                selectedActivityId={selectedActivityId}
-                setSelectedActivityId={setSelectedActivityId}
-                onAssignActivity={assignActivityToSelectedSlots}
-                onResetSelection={clearSelection}
-                hasSelection={selectedSlots.size > 0}
-                hasConflicts={hasConflicts}
-                conflictingSlots={conflictingSlots}
-                onClearAndAssign={() => {
-                  setSlotToActivityMap((prev) => {
-                    const newMap = new Map(prev);
-                    selectedSlots.forEach((slotId) => newMap.delete(slotId));
-                    return newMap;
-                  });
-                  setError(null);
-                  setPendingAssignment(null);
-                  setConflictingSlots([]);
-                }}
-                onForceReplace={() => {
-                  if (pendingAssignment) applyAssignment(pendingAssignment);
-                }}
-                error={error || undefined}
-                isCreating={isCreating}
-                setIsCreating={setIsCreating}
-              />
-              <ScheduleActions
-                slotToActivityMap={slotToActivityMap}
-                clearSelection={clearSelection}
-                setSlotToActivityMap={setSlotToActivityMap}
-                setSelectedActivityId={setSelectedActivityId}
-                setPendingAssignment={setPendingAssignment}
-                setConflictingSlots={setConflictingSlots}
-                setHasConflicts={setHasConflicts}
-              />
-              <button
-                onClick={() => setIsHoursOpen(true)}
-                className="w-full rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm font-semibold text-center hover:bg-gray-50 dark:hover:bg-gray-700"
-              >
-                Résumé des heures
-              </button>
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
+            {/* SIDEBAR -> au-dessus en mobile, à gauche en desktop */}
+            <div className="w-full lg:w-[360px] lg:shrink-0">
+              <div className="flex flex-col space-y-4 p-4 bg-transparent overflow-y-auto lg:max-h-[calc(100vh-6rem)]">
+                <TimeSlotPreview
+                  selectedSlots={selectedSlots}
+                  setSelectedActivityId={setSelectedActivityId}
+                  onAssignActivity={assignActivityToSelectedSlots}
+                />
+
+                <ActivityActions
+                  activities={activities}
+                  selectedActivityId={selectedActivityId}
+                  setSelectedActivityId={setSelectedActivityId}
+                  onAssignActivity={assignActivityToSelectedSlots}
+                  onResetSelection={clearSelection}
+                  hasSelection={selectedSlots.size > 0}
+                  hasConflicts={hasConflicts}
+                  conflictingSlots={conflictingSlots}
+                  onClearAndAssign={() => {
+                    setSlotToActivityMap((prev) => {
+                      const newMap = new Map(prev);
+                      selectedSlots.forEach((slotId) => newMap.delete(slotId));
+                      return newMap;
+                    });
+                    setError(null);
+                    setPendingAssignment(null);
+                    setConflictingSlots([]);
+                  }}
+                  onForceReplace={() => {
+                    if (pendingAssignment) applyAssignment(pendingAssignment);
+                  }}
+                  error={error || undefined}
+                  isCreating={isCreating}
+                  setIsCreating={setIsCreating}
+                />
+
+                <ScheduleActions
+                  slotToActivityMap={slotToActivityMap}
+                  clearSelection={clearSelection}
+                  setSlotToActivityMap={setSlotToActivityMap}
+                  setSelectedActivityId={setSelectedActivityId}
+                  setPendingAssignment={setPendingAssignment}
+                  setConflictingSlots={setConflictingSlots}
+                  setHasConflicts={setHasConflicts}
+                />
+
+                <button
+                  onClick={() => setIsHoursOpen(true)}
+                  className="w-full rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm font-semibold text-center hover:bg-gray-50 dark:hover:bg-gray-700"
+                >
+                  Résumé des heures
+                </button>
+              </div>
             </div>
+
+            {/* MODAL inchangé */}
             {isHoursOpen && (
               <div
                 className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
@@ -242,18 +250,21 @@ function App() {
               </div>
             )}
 
-            <div className="calendar-section">
-              <ResizableTable
-                selectedSlots={selectedSlots}
-                slotToActivityMap={slotToActivityMap}
-                activities={activities}
-                WEEK_DAYS={WEEK_DAYS}
-                TIME_SLOTS={TIME_SLOTS}
-                handleMouseDown={handleMouseDown}
-                handleMouseEnter={handleMouseEnter}
-                clearSelection={clearSelection}
-                setSelectedSlots={setSelectedSlots}
-              />
+            {/* CALENDAR -> min-w-0 sinon le scroll horizontal est cassé dans un flex row */}
+            <div className="w-full min-w-0">
+              <div className="calendar-section">
+                <ResizableTable
+                  selectedSlots={selectedSlots}
+                  slotToActivityMap={slotToActivityMap}
+                  activities={activities}
+                  WEEK_DAYS={WEEK_DAYS}
+                  TIME_SLOTS={TIME_SLOTS}
+                  handleMouseDown={handleMouseDown}
+                  handleMouseEnter={handleMouseEnter}
+                  clearSelection={clearSelection}
+                  setSelectedSlots={setSelectedSlots}
+                />
+              </div>
             </div>
           </div>
         )}

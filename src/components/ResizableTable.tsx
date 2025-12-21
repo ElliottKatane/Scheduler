@@ -43,124 +43,172 @@ const ResizableTable: React.FC<ResizableTableProps> = ({
 
   const minutes = ["00", "30"];
 
+  // Largeur min de table: dépend du nombre de jours (évite “je vois que lundi/mardi”)
+  // 90px pour la colonne heures + ~140px par jour (ajuste si besoin)
+  const minTableWidth = 90 + WEEK_DAYS.length * 140;
+
   return (
-    <div className="container-main">
-      <table className="schedule-table">
-        <thead>
-          <tr>
-            <th>Heures/jour</th>
-            {WEEK_DAYS.map((day, i) => (
-              <th key={i}>{day}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {TIME_SLOTS.flatMap((hour) =>
-            minutes.map((minute, minIndex) => {
-              const label =
-                minIndex === 0 ? `${hour.toString().padStart(2, "0")}:00` : "";
+    <div className="w-full">
+      {/* Hint mobile */}
+      <div className="lg:hidden text-xs text-gray-400 mb-2">
+        Fais glisser horizontalement pour voir les autres jours.
+      </div>
 
-              return (
-                <tr key={`${hour}-${minute}`}>
-                  <th style={{ height: rowHeight }}>{label}</th>
-                  {WEEK_DAYS.map((_, dayIndex) => {
-                    const slotId = `${hour}-${minute}-${dayIndex}`;
-                    const mergedBlock = slotToMerged.get(slotId);
-                    const isStart = startSlotIds.has(slotId);
-                    const activityId = slotToActivityMap.get(slotId);
-                    const activity = getActivity(activityId);
-                    const isSelected = selectedSlots.has(slotId);
-                    const isInsideBlock =
-                      mergedBlock && mergedBlock.slotIds.includes(slotId);
+      {/* Scroll horizontal */}
+      <div className="w-full overflow-x-auto [-webkit-overflow-scrolling:touch]">
+        <table
+          className="schedule-table w-max table-fixed"
+          style={{ minWidth: `${minTableWidth}px` }}
+        >
+          <thead>
+            <tr>
+              <th
+                className={[
+                  "sticky top-0 left-0 z-40",
+                  "bg-gray-900",
+                  "text-left",
+                ].join(" ")}
+                style={{ width: 90 }}
+              >
+                Heures/jour
+              </th>
 
-                    const isLastInBlock =
-                      isInsideBlock &&
-                      mergedBlock!.slotIds[mergedBlock!.slotIds.length - 1] ===
-                        slotId;
+              {WEEK_DAYS.map((day, i) => (
+                <th
+                  key={i}
+                  className={[
+                    "sticky top-0 z-30",
+                    "bg-gray-900",
+                    "text-center",
+                  ].join(" ")}
+                  style={{ minWidth: 140 }}
+                >
+                  {day}
+                </th>
+              ))}
+            </tr>
+          </thead>
 
-                    const className =
-                      "half-slot" +
-                      (isInsideBlock && !isStart ? " no-top-border" : "") +
-                      (isInsideBlock && !isLastInBlock
-                        ? " no-bottom-border"
-                        : "") +
-                      (isSelected ? " selected" : "");
+          <tbody>
+            {TIME_SLOTS.flatMap((hour) =>
+              minutes.map((minute, minIndex) => {
+                const label =
+                  minIndex === 0
+                    ? `${hour.toString().padStart(2, "0")}:00`
+                    : "";
 
-                    return (
-                      <td
-                        key={slotId}
-                        className={`timeSlotCell ${
-                          slotToMerged.has(slotId) ? "merged-cell" : ""
-                        }`}
-                        style={{ height: rowHeight }}
-                      >
-                        <div
-                          className={className}
-                          id={slotId}
-                          style={{
-                            backgroundColor: isInsideBlock
-                              ? activity?.color
-                              : undefined,
-                          }}
-                          onMouseDown={(e) => {
-                            e.preventDefault();
+                return (
+                  <tr key={`${hour}-${minute}`}>
+                    <th
+                      className={[
+                        "sticky left-0 z-20",
+                        "bg-gray-950",
+                        "text-left",
+                      ].join(" ")}
+                      style={{ height: rowHeight, width: 90 }}
+                    >
+                      {label}
+                    </th>
 
-                            if (isInsideBlock && mergedBlock) {
-                              setSelectedSlots((prev) => {
-                                const isAlreadySelected =
-                                  mergedBlock.slotIds.every((id) =>
-                                    prev.has(id)
-                                  );
+                    {WEEK_DAYS.map((_, dayIndex) => {
+                      const slotId = `${hour}-${minute}-${dayIndex}`;
+                      const mergedBlock = slotToMerged.get(slotId);
+                      const isStart = startSlotIds.has(slotId);
+                      const activityId = slotToActivityMap.get(slotId);
+                      const activity = getActivity(activityId);
+                      const isSelected = selectedSlots.has(slotId);
+                      const isInsideBlock =
+                        mergedBlock && mergedBlock.slotIds.includes(slotId);
 
-                                const updated = new Set(prev);
+                      const isLastInBlock =
+                        isInsideBlock &&
+                        mergedBlock!.slotIds[
+                          mergedBlock!.slotIds.length - 1
+                        ] === slotId;
 
-                                if (isAlreadySelected) {
-                                  // Toggle OFF
-                                  mergedBlock.slotIds.forEach((id) =>
-                                    updated.delete(id)
-                                  );
-                                } else {
-                                  // Toggle ON
-                                  mergedBlock.slotIds.forEach((id) =>
-                                    updated.add(id)
-                                  );
-                                }
+                      const className =
+                        "half-slot" +
+                        (isInsideBlock && !isStart ? " no-top-border" : "") +
+                        (isInsideBlock && !isLastInBlock
+                          ? " no-bottom-border"
+                          : "") +
+                        (isSelected ? " selected" : "");
 
-                                return updated;
-                              });
-                            } else {
-                              handleMouseDown(e);
-                            }
-                          }}
-                          onMouseEnter={
-                            isInsideBlock ? undefined : handleMouseEnter
-                          }
+                      return (
+                        <td
+                          key={slotId}
+                          className={`timeSlotCell ${
+                            slotToMerged.has(slotId) ? "merged-cell" : ""
+                          }`}
+                          style={{ height: rowHeight, minWidth: 140 }}
                         >
-                          {isStart && activity ? (
-                            <>
-                              <div className="activity-name">
-                                {activity.name}
-                              </div>
-                              <div className="activity-duration">
-                                {formatDuration(
-                                  mergedBlock!.startHour,
-                                  mergedBlock!.startMinute,
-                                  mergedBlock!.endHour,
-                                  mergedBlock!.endMinute
-                                )}
-                              </div>
-                            </>
-                          ) : null}
-                        </div>
-                      </td>
-                    );
-                  })}
-                </tr>
-              );
-            })
-          )}
-        </tbody>
-      </table>
+                          <div
+                            className={className}
+                            id={slotId}
+                            style={{
+                              backgroundColor: isInsideBlock
+                                ? activity?.color
+                                : undefined,
+                            }}
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+
+                              if (isInsideBlock && mergedBlock) {
+                                setSelectedSlots((prev) => {
+                                  const isAlreadySelected =
+                                    mergedBlock.slotIds.every((id) =>
+                                      prev.has(id)
+                                    );
+
+                                  const updated = new Set(prev);
+
+                                  if (isAlreadySelected) {
+                                    mergedBlock.slotIds.forEach((id) =>
+                                      updated.delete(id)
+                                    );
+                                  } else {
+                                    mergedBlock.slotIds.forEach((id) =>
+                                      updated.add(id)
+                                    );
+                                  }
+
+                                  return updated;
+                                });
+                              } else {
+                                handleMouseDown(e);
+                              }
+                            }}
+                            onMouseEnter={
+                              isInsideBlock ? undefined : handleMouseEnter
+                            }
+                          >
+                            {isStart && activity ? (
+                              <>
+                                {/* Petites tailles mobile sans casser ton CSS existant */}
+                                <div className="activity-name text-[10px] sm:text-xs">
+                                  {activity.name}
+                                </div>
+                                <div className="activity-duration text-[10px] sm:text-xs">
+                                  {formatDuration(
+                                    mergedBlock!.startHour,
+                                    mergedBlock!.startMinute,
+                                    mergedBlock!.endHour,
+                                    mergedBlock!.endMinute
+                                  )}
+                                </div>
+                              </>
+                            ) : null}
+                          </div>
+                        </td>
+                      );
+                    })}
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };
