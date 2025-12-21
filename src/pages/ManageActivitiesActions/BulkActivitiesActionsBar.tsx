@@ -54,13 +54,6 @@ export default function BulkActivitiesActionsBar({
     [selectedActivities]
   );
 
-  const parseRate = (): number | undefined => {
-    const v = hourlyRateInput.trim();
-    if (v === "") return undefined;
-    const n = Number(v);
-    return Number.isFinite(n) ? n : undefined;
-  };
-
   return (
     <div className="rounded-xl border border-gray-700 bg-gray-950/20 p-4 md:p-5 space-y-5">
       {/* Header */}
@@ -105,25 +98,28 @@ export default function BulkActivitiesActionsBar({
       <div className="h-px bg-gray-800" />
 
       {/* Actions */}
-      <div className="grid grid-cols-12 gap-4">
-        {/* Ajouter un label */}
-        <div className="col-span-12 lg:col-span-6">
-          <div className="text-xs font-medium text-gray-400 mb-1">
-            Ajouter un label
-          </div>
-          <div className="flex gap-2">
-            <select
-              value={labelToAdd}
-              onChange={(e) => setLabelToAdd(e.target.value)}
-              className="h-11 flex-1 rounded border border-gray-600 bg-gray-800 text-white px-3 focus:outline-none focus:ring-2 focus:ring-blue-600"
-            >
-              <option value="">Choisir…</option>
-              {globalLabels.map((l) => (
-                <option key={l} value={l}>
-                  {l}
-                </option>
-              ))}
-            </select>
+      <div className="grid grid-cols-12 gap-6">
+        {/* Bloc gauche : Actions rapides alignées */}
+        <div className="col-span-12 lg:col-span-6 space-y-4">
+          {/* Ajouter un label */}
+          <div className="grid grid-cols-[1fr_auto] gap-2 items-end">
+            <div>
+              <div className="text-xs font-medium text-gray-400 mb-1">
+                Ajouter un label
+              </div>
+              <select
+                value={labelToAdd}
+                onChange={(e) => setLabelToAdd(e.target.value)}
+                className="h-11 w-full rounded border border-gray-600 bg-gray-800 text-white px-3 focus:outline-none focus:ring-2 focus:ring-blue-600"
+              >
+                <option value="">Choisir…</option>
+                {globalLabels.map((l) => (
+                  <option key={l} value={l}>
+                    {l}
+                  </option>
+                ))}
+              </select>
+            </div>
 
             <button
               type="button"
@@ -132,21 +128,84 @@ export default function BulkActivitiesActionsBar({
                 onAddLabel(selectedIds, labelToAdd);
                 setLabelToAdd("");
               }}
-              className="h-11 px-4 rounded border border-gray-600 text-gray-200 hover:bg-gray-800 disabled:opacity-40 disabled:hover:bg-transparent"
+              className="h-11 shrink-0 whitespace-nowrap px-4 rounded border border-gray-600 text-gray-200 hover:bg-gray-800 disabled:opacity-40 disabled:hover:bg-transparent"
+            >
+              Appliquer
+            </button>
+          </div>
+
+          {/* Taux horaire */}
+          <div className="grid grid-cols-[1fr_auto] gap-2 items-end">
+            <div>
+              <div className="text-xs font-medium text-gray-400 mb-1">
+                Taux horaire
+              </div>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={hourlyRateInput}
+                onChange={(e) => setHourlyRateInput(e.target.value)}
+                placeholder="Ex : 28.00"
+                className="h-11 w-full rounded border border-gray-600 bg-gray-800 text-white px-3 focus:outline-none focus:ring-2 focus:ring-blue-600"
+              />
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                const v = hourlyRateInput.trim();
+                const n = v === "" ? undefined : Number(v);
+                onSetHourlyRate(
+                  selectedIds,
+                  Number.isFinite(n as number) ? n : undefined
+                );
+              }}
+              title="Laisse vide pour effacer le taux"
+              className="h-11 shrink-0 whitespace-nowrap px-4 rounded border border-gray-600 text-gray-200 hover:bg-gray-800"
+            >
+              Appliquer
+            </button>
+          </div>
+
+          {/* Couleur */}
+          <div className="grid grid-cols-[1fr_auto] gap-2 items-end">
+            <div>
+              <div className="text-xs font-medium text-gray-400 mb-1">
+                Appliquer une couleur
+              </div>
+
+              <div className="h-11 w-full flex items-center gap-2 rounded border border-gray-600 bg-gray-800 px-3">
+                <input
+                  type="color"
+                  value={bulkColor}
+                  onChange={(e) => setBulkColor(e.target.value)}
+                  className="w-8 h-8 p-0 border border-gray-600 rounded bg-transparent"
+                  aria-label="Choisir la couleur à appliquer"
+                />
+                <div className="text-xs text-gray-300">{bulkColor}</div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => onSetColor(selectedIds, bulkColor)}
+              className="h-11 shrink-0 whitespace-nowrap px-4 rounded border border-gray-600 text-gray-200 hover:bg-gray-800"
             >
               Appliquer
             </button>
           </div>
         </div>
 
-        {/* Supprimer des labels */}
-        <div className="col-span-12 lg:col-span-6">
-          <div className="text-xs font-medium text-gray-400 mb-1">
-            Supprimer des labels
-          </div>
+        {/* Bloc droit : Supprimer des labels aligné */}
+        <div className="col-span-12 lg:col-span-6 space-y-4">
+          <div>
+            <div className="text-xs font-medium text-gray-400 mb-2">
+              Supprimer des labels
+            </div>
 
-          <div className="flex flex-col gap-2">
-            <div className="flex flex-wrap gap-2">
+            {/* Mode */}
+            <div className="flex flex-wrap gap-2 mb-2">
               <button
                 type="button"
                 onClick={() => setRemoveMode("all")}
@@ -171,12 +230,13 @@ export default function BulkActivitiesActionsBar({
               </button>
             </div>
 
-            <div className="flex gap-2">
+            {/* Choix + Appliquer alignés */}
+            <div className="grid grid-cols-[1fr_auto] gap-2 items-end">
               <select
                 value={labelToRemove}
                 onChange={(e) => setLabelToRemove(e.target.value)}
                 disabled={removeMode !== "one"}
-                className="h-11 flex-1 rounded border border-gray-600 bg-gray-800 text-white px-3 disabled:opacity-40 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                className="h-11 w-full rounded border border-gray-600 bg-gray-800 text-white px-3 disabled:opacity-40 focus:outline-none focus:ring-2 focus:ring-blue-600"
               >
                 <option value="">Choisir un label…</option>
                 {globalLabels.map((l) => (
@@ -200,74 +260,25 @@ export default function BulkActivitiesActionsBar({
                   }
                 }}
                 disabled={removeMode === "one" && !labelToRemove}
-                className="h-11 px-4 rounded border border-gray-600 text-gray-200 hover:bg-gray-800 disabled:opacity-40 disabled:hover:bg-transparent"
+                className="h-11 shrink-0 whitespace-nowrap px-4 rounded border border-gray-600 text-gray-200 hover:bg-gray-800 disabled:opacity-40 disabled:hover:bg-transparent"
               >
                 Appliquer
               </button>
             </div>
+
+            {removeMode === "all" && (
+              <div className="mt-2 text-xs text-gray-500">
+                Tout retirer ignore le choix du label.
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Taux horaire */}
-        <div className="col-span-12 md:col-span-6 lg:col-span-4">
-          <div className="text-xs font-medium text-gray-400 mb-1">
-            Taux horaire
-          </div>
-          <div className="flex gap-2">
-            <input
-              type="number"
-              step="0.01"
-              min="0"
-              value={hourlyRateInput}
-              onChange={(e) => setHourlyRateInput(e.target.value)}
-              placeholder="Ex : 28.00"
-              className="h-11 flex-1 rounded border border-gray-600 bg-gray-800 text-white px-3 focus:outline-none focus:ring-2 focus:ring-blue-600"
-            />
-            <button
-              type="button"
-              onClick={() => onSetHourlyRate(selectedIds, parseRate())}
-              title="Laisse vide pour effacer le taux"
-              className="h-11 px-4 rounded border border-gray-600 text-gray-200 hover:bg-gray-800"
-            >
-              Appliquer
-            </button>
-          </div>
-        </div>
-
-        {/* Couleur */}
-        <div className="col-span-12 md:col-span-6 lg:col-span-4">
-          <div className="text-xs font-medium text-gray-400 mb-1">
-            Appliquer une couleur
-          </div>
-
-          <div className="flex items-center gap-2">
-            <div className="h-11 flex items-center gap-2 rounded border border-gray-600 bg-gray-800 px-3">
-              <input
-                type="color"
-                value={bulkColor}
-                onChange={(e) => setBulkColor(e.target.value)}
-                className="w-8 h-8 p-0 border border-gray-600 rounded bg-transparent"
-                aria-label="Choisir la couleur à appliquer"
-              />
-              <div className="text-xs text-gray-300">{bulkColor}</div>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => onSetColor(selectedIds, bulkColor)}
-              className="h-11 px-4 rounded border border-gray-600 text-gray-200 hover:bg-gray-800"
-            >
-              Appliquer
-            </button>
-          </div>
-        </div>
-
-        {/* Visibilité */}
+        {/* Visibilité : ligne dédiée */}
         <div className="col-span-12">
           <div className="text-xs font-medium text-gray-400 mb-1">
             Visibilité
           </div>
-
           <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
