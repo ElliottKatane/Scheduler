@@ -118,10 +118,12 @@ const HoursSummary = ({
   const globalHours = rows.reduce((sum, r) => sum + r.hours, 0);
 
   // total global: seulement si toutes les lignes ont un total
-  const hasAnyMissingTotal = rows.some((r) => r.total == null);
-  const globalTotal = hasAnyMissingTotal
-    ? undefined
-    : rows.reduce((sum, r) => sum + (r.total ?? 0), 0);
+  const totals = rows
+    .map((r) => r.total)
+    .filter((t): t is number => typeof t === "number");
+
+  const globalTotal =
+    totals.length > 0 ? totals.reduce((sum, t) => sum + t, 0) : undefined;
 
   return (
     <div>
