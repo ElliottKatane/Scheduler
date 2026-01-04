@@ -14,7 +14,8 @@ import {
   doc,
   onSnapshot,
   serverTimestamp,
-  setDoc, // méthode built-in
+  setDoc,
+  updateDoc,
 } from "firebase/firestore";
 
 interface SavedSchedulesContextType {
@@ -28,10 +29,10 @@ interface SavedSchedulesContextType {
 export const SavedSchedulesContext =
   createContext<SavedSchedulesContextType | null>(null);
 
-// Helpers conversion
-const entriesToObject = (entries: [string, string][]) =>
-  Object.fromEntries(entries);
+/** Firestore-friendly: Map -> plain object (no nested arrays) */
+const mapToObject = (m: Map<string, string>) => Object.fromEntries(m);
 
+/** Firestore object -> entries for your SavedSchedule.data */
 const objectToEntries = (o: Record<string, string>) =>
   Object.entries(o) as [string, string][];
 
@@ -42,31 +43,32 @@ export const SavedSchedulesProvider = ({
 }) => {
   const [uid, setUid] = useState<string | null>(null);
 
-  // ✅ init depuis localStorage (mode invité)
+  // Mode invité: init depuis localStorage
   const [schedules, setSchedules] = useState<SavedSchedule[]>(() => {
     const saved = localStorage.getItem("schedules");
     if (!saved) return [];
     try {
-      return JSON.parse(saved);
+      return JSON.parse(saved) as SavedSchedule[];
     } catch (e) {
-      console.error("❌ Erreur parsing schedules", e);
+      console.error("Erreur parsing schedules", e);
       return [];
     }
   });
 
-  // 🔐 écouter l'auth
+  // Auth listener
   useEffect(() => {
     return onAuthStateChanged(auth, (user) => {
       setUid(user?.uid ?? null);
     });
   }, []);
 
-  // 🚚 Migration one-shot des EDT locaux vers Firestore au premier login
+  // Migration one-shot: localStorage -> Firestore au premier login
   useEffect(() => {
     if (!uid) return;
+
     const migratedKey = `migrated_schedules_${uid}`;
     if (localStorage.getItem(migratedKey) === "1") return;
-    // migration one-shot: localStorage -> Firestore
+
     const raw = localStorage.getItem("schedules");
     if (!raw) {
       localStorage.setItem(migratedKey, "1");
@@ -75,55 +77,58 @@ export const SavedSchedulesProvider = ({
 
     let localSchedules: SavedSchedule[] = [];
     try {
-      localSchedules = JSON.parse(raw);
-    } catch {
+      localSchedules = JSON.parse(raw) as SavedSchedule[];
+    } catch (e) {
+      console.error("Erreur parsing schedules (migration)", e);
       return;
     }
 
-    if (!localSchedules.length) return;
+    // Même si vide: on marque migré pour éviter de boucler
+    if (!localSchedules.length) {
+      localStorage.setItem(migratedKey, "1");
+      return;
+    }
 
-    // push tout en cloud (merge)
     Promise.all(
       localSchedules.map((s) =>
         setDoc(
           doc(db, "users", uid, "schedules", s.id),
           {
             name: s.name ?? "Sans titre",
-            slotToActivityMap: entriesToObject(s.data ?? []),
+            // IMPORTANT: on écrit en OBJET, pas en tableau de tableaux
+            slotToActivityMap: Object.fromEntries(s.data ?? []),
             updatedAt: serverTimestamp(),
-            createdAt: serverTimestamp(), // optionnel (merge => ne remplacera pas si déjà présent si tu gères ça plus bas)
           },
           { merge: true }
         )
       )
     )
       .then(() => {
-        // option: une fois migré, tu peux supprimer le local pour éviter confusion
         localStorage.removeItem("schedules");
         localStorage.setItem(migratedKey, "1");
       })
-      .catch((e) => console.error("❌ Firestore migration", e));
+      .catch((e) => console.error("Firestore migration", e));
   }, [uid]);
 
-  // 📦 Source de vérité des EDT : localStorage en invité, Firestore en connecté (flush au switch)
+  // Source de vérité: localStorage si invité, Firestore si connecté
   useEffect(() => {
-    // flush immédiat (évite l'ancien mode à l'écran)
+    // flush immédiat au switch (évite les “fantômes”)
     setSchedules([]);
 
-    // invité -> localStorage
+    // Invité -> localStorage
     if (!uid) {
       const raw = localStorage.getItem("schedules");
       if (!raw) return;
 
       try {
-        setSchedules(JSON.parse(raw));
+        setSchedules(JSON.parse(raw) as SavedSchedule[]);
       } catch {
         setSchedules([]);
       }
       return;
     }
 
-    // connecté -> Firestore snapshot
+    // Connecté -> Firestore snapshot
     const colRef = collection(db, "users", uid, "schedules");
     const unsub = onSnapshot(colRef, (snap) => {
       const next: SavedSchedule[] = snap.docs.map((d) => {
@@ -146,7 +151,7 @@ export const SavedSchedulesProvider = ({
     return () => unsub();
   }, [uid]);
 
-  // 💾 Persistance locale des EDT uniquement en mode invité
+  // Persistance locale uniquement en mode invité
   useEffect(() => {
     if (uid) return;
     localStorage.setItem("schedules", JSON.stringify(schedules));
@@ -165,62 +170,72 @@ export const SavedSchedulesProvider = ({
       await setDoc(
         doc(db, "users", uid, "schedules", schedule.id),
         {
-          name: schedule.name,
-          slotToActivityMap: entriesToObject(schedule.data),
+          name: schedule.name ?? "Sans titre",
+          slotToActivityMap: Object.fromEntries(schedule.data ?? []),
           updatedAt: serverTimestamp(),
         },
         { merge: true }
       );
     } catch (e) {
-      console.error("❌ Firestore addSchedule", e);
+      console.error("Firestore addSchedule", e);
+      throw e;
     }
   };
 
   const deleteSchedule = async (id: string): Promise<void> => {
-    setSchedules((prev) => prev.filter((s) => s.id !== id));
+    if (!uid) {
+      setSchedules((prev) => prev.filter((s) => s.id !== id));
+      return;
+    }
 
-    if (!uid) return;
-
-    await deleteDoc(doc(db, "users", uid, "schedules", id));
+    try {
+      await deleteDoc(doc(db, "users", uid, "schedules", id));
+      // pas besoin de setSchedules ici: le snapshot va refresh
+    } catch (e) {
+      console.error("Firestore deleteSchedule", e);
+      throw e;
+    }
   };
 
-  const updateSchedule = async (id: string, data: Map<string, string>) => {
-    const entries = Array.from(data.entries());
-
+  const updateSchedule = async (id: string, map: Map<string, string>) => {
     setSchedules((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, data: entries } : s))
+      prev.map((s) =>
+        s.id === id ? { ...s, data: Array.from(map.entries()) } : s
+      )
     );
 
     if (!uid) return;
 
-    await setDoc(
-      doc(db, "users", uid, "schedules", id),
-      {
-        data: entries, // <-- IMPORTANT : même forme que partout
-        updatedAt: serverTimestamp(),
-      },
-      { merge: true }
-    );
+    await updateDoc(doc(db, "users", uid, "schedules", id), {
+      slotToActivityMap: Object.fromEntries(map),
+      updatedAt: serverTimestamp(),
+    });
   };
 
   const updateScheduleName = async (
     id: string,
     newName: string
   ): Promise<void> => {
+    // Local update
     setSchedules((prev) =>
       prev.map((s) => (s.id === id ? { ...s, name: newName } : s))
     );
 
     if (!uid) return;
 
-    await setDoc(
-      doc(db, "users", uid, "schedules", id),
-      {
-        name: newName,
-        updatedAt: serverTimestamp(),
-      },
-      { merge: true }
-    );
+    try {
+      await setDoc(
+        doc(db, "users", uid, "schedules", id),
+        {
+          name: newName,
+          updatedAt: serverTimestamp(),
+        },
+        { merge: true }
+      );
+    } catch (e) {
+      console.error("Firestore updateScheduleName", e);
+      throw e;
+    }
   };
 
   return (

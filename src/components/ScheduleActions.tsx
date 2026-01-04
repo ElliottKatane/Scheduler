@@ -69,10 +69,10 @@ const ScheduleActions: React.FC<Props> = ({
     toast.success("Emploi du temps sauvegardé");
   };
 
-  const handleUpdateExisting = () => {
+  const handleUpdateExisting = async () => {
     if (!currentSchedule) return;
 
-    updateSchedule(currentSchedule.id, slotToActivityMap);
+    await updateSchedule(currentSchedule.id, slotToActivityMap);
     markSaved(slotToActivityMap);
 
     toast.success("Emploi du temps mis à jour");
