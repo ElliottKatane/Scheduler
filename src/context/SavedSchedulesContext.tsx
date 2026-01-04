@@ -29,9 +29,6 @@ interface SavedSchedulesContextType {
 export const SavedSchedulesContext =
   createContext<SavedSchedulesContextType | null>(null);
 
-/** Firestore-friendly: Map -> plain object (no nested arrays) */
-const mapToObject = (m: Map<string, string>) => Object.fromEntries(m);
-
 /** Firestore object -> entries for your SavedSchedule.data */
 const objectToEntries = (o: Record<string, string>) =>
   Object.entries(o) as [string, string][];
@@ -198,14 +195,17 @@ export const SavedSchedulesProvider = ({
   };
 
   const updateSchedule = async (id: string, map: Map<string, string>) => {
+    // UI locale: OK (entries = array of tuples)
     setSchedules((prev) =>
       prev.map((s) =>
         s.id === id ? { ...s, data: Array.from(map.entries()) } : s
       )
     );
 
+    // invité => rien à pousser en cloud
     if (!uid) return;
 
+    // Firestore: IMPORTANT = objet plat, pas un tableau d'entries
     await updateDoc(doc(db, "users", uid, "schedules", id), {
       slotToActivityMap: Object.fromEntries(map),
       updatedAt: serverTimestamp(),
