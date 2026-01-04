@@ -25,7 +25,7 @@ function App() {
   const [weekStartDate, setWeekStartDate] = useState<string>(CALENDAR_START);
   const { user } = useAuthStatus();
   const uid = user?.uid ?? null;
-  const { activities, isCloud } = activityContext;
+  const { activities } = activityContext;
   const { schedules } = useSavedSchedules(); // pour comparer avec les emplois sauvegardés
 
   // tr : ligne. donc pour avoir les horaires en ligne, il faut mapper les slotHours dans des <tr>
