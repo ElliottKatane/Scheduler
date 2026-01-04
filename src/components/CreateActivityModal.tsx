@@ -3,7 +3,7 @@ import { Activity } from "../types";
 
 interface Props {
   onClose: () => void;
-  onCreate: (activity: Activity) => void;
+  onCreate: (activity: Activity) => void | Promise<void>;
 }
 
 const CreateActivityModal: React.FC<Props> = ({ onClose, onCreate }) => {
@@ -14,7 +14,7 @@ const CreateActivityModal: React.FC<Props> = ({ onClose, onCreate }) => {
   const [label, setLabel] = useState(""); // un seul label pour commencer
   const [hourlyRate, setHourlyRate] = useState(""); // string pour l'input
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!name.trim()) return;
 
     const rate = hourlyRate.trim() === "" ? undefined : Number(hourlyRate);
@@ -29,7 +29,7 @@ const CreateActivityModal: React.FC<Props> = ({ onClose, onCreate }) => {
         : undefined,
     };
 
-    onCreate(newActivity);
+    await onCreate(newActivity);
 
     setName("");
     setColor("#00cc88");

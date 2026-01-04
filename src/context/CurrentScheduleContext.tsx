@@ -1,5 +1,12 @@
-import { createContext, useState, useContext, ReactNode } from "react";
+import {
+  createContext,
+  useState,
+  useContext,
+  ReactNode,
+  useEffect,
+} from "react";
 import { SavedSchedule } from "../types";
+import { useAuthStatus } from "../hooks/useAuthStatus";
 
 interface CurrentScheduleContextType {
   currentSchedule: SavedSchedule | null;
@@ -17,6 +24,9 @@ export const CurrentScheduleProvider = ({
 }: {
   children: ReactNode;
 }) => {
+  const { user } = useAuthStatus();
+  const uid = user?.uid ?? null;
+
   const [currentSchedule, setCurrentSchedule] = useState<SavedSchedule | null>(
     null
   );
@@ -24,6 +34,13 @@ export const CurrentScheduleProvider = ({
     new Map()
   );
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+
+  // ✅ reset automatique quand on change de "mode" (invité <-> connecté) ou de compte
+  useEffect(() => {
+    setCurrentSchedule(null);
+    setInitialData(new Map());
+    setLastSaved(null);
+  }, [uid]);
 
   const markSaved = (data: Map<string, string>) => {
     setInitialData(new Map(data));

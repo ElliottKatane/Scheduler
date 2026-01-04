@@ -107,7 +107,7 @@ const SavedSchedules: React.FC<Props> = ({ activities, onLoad }) => {
                 Exporter en PDF
               </Button>
               <Button variant="secondary" onClick={() => handleExport(s, true)}>
-                Smart Export
+                PDF compact
               </Button>
               <Button
                 variant="secondary"

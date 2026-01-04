@@ -1,5 +1,4 @@
 import { useState, useContext, useEffect } from "react";
-import { TIME_SLOTS, WEEK_DAYS } from "./constants";
 import { useSelection } from "./hooks/useSelection";
 import TimeSlotPreview from "./components/TimeSlotPreview";
 import ManageActivities from "./pages/ManageActivities";
@@ -12,16 +11,21 @@ import { useSavedSchedules } from "./context/SavedSchedulesContext";
 import ScheduleActions from "./components/ScheduleActions";
 import ResizableTable from "./components/ResizableTable";
 import ActivityActions from "./components/ActivityActions";
+import { CALENDAR_START, getCurrentWeekMonday } from "./constants";
+
 import "./App.css";
 import BooksAndMovies from "./components/BooksAndMovies";
 import HoursSummary from "./components/HoursSummary";
+import { useAuthStatus } from "./hooks/useAuthStatus";
 function App() {
   const activityContext = useContext(ActivityContext);
   if (!activityContext) return null; // ou fallback/chargement si besoin
   const [selectedActivityId, setSelectedActivityId] = useState<string>("");
   const [isCreating, setIsCreating] = useState(false);
-
-  const { activities } = activityContext;
+  const [weekStartDate, setWeekStartDate] = useState<string>(CALENDAR_START);
+  const { user } = useAuthStatus();
+  const uid = user?.uid ?? null;
+  const { activities, isCloud } = activityContext;
   const { schedules } = useSavedSchedules(); // pour comparer avec les emplois sauvegardés
 
   // tr : ligne. donc pour avoir les horaires en ligne, il faut mapper les slotHours dans des <tr>
@@ -50,31 +54,56 @@ function App() {
   });
   // On essaie de retrouver un emploi du temps qui correspond exactement
   useEffect(() => {
-    if (slotToActivityMap.size === 0 || schedules.length === 0) return;
+    if (slotToActivityMap.size === 0 || schedules.length === 0) {
+      setCurrentSchedule(null);
+      return;
+    }
 
-    // On essaie de retrouver un emploi du temps qui correspond exactement
+    let matched: typeof currentSchedule = null;
+
     for (const schedule of schedules) {
       const savedMap = new Map(schedule.data);
-      let isSame = savedMap.size === slotToActivityMap.size;
-      if (isSame) {
-        for (const [key, value] of savedMap) {
-          if (slotToActivityMap.get(key) !== value) {
-            isSame = false;
-            break;
-          }
+      if (savedMap.size !== slotToActivityMap.size) continue;
+
+      let same = true;
+      for (const [k, v] of savedMap) {
+        if (slotToActivityMap.get(k) !== v) {
+          same = false;
+          break;
         }
       }
-      if (isSame) {
-        setCurrentSchedule(schedule);
+
+      if (same) {
+        matched = schedule;
         break;
       }
     }
+
+    setCurrentSchedule(matched);
   }, [slotToActivityMap, schedules]);
 
   useEffect(() => {
+    if (uid) return; // connecté => pas de brouillon local
+
     const serialized = JSON.stringify(Array.from(slotToActivityMap.entries()));
     localStorage.setItem("slotToActivityMap", serialized);
-  }, [slotToActivityMap]);
+  }, [slotToActivityMap, uid]);
+
+  useEffect(() => {
+    // reset UI schedule identity
+    setCurrentSchedule(null);
+
+    // reset brouillon
+    setSlotToActivityMap(new Map());
+    setWeekStartDate(getCurrentWeekMonday());
+
+    // reset UI selection
+    clearSelection();
+    setSelectedActivityId("");
+    setPendingAssignment(null);
+    setConflictingSlots([]);
+    setHasConflicts(false);
+  }, [uid]);
 
   const [pendingAssignment, setPendingAssignment] = useState<string | null>(
     null
@@ -235,6 +264,7 @@ function App() {
                     <h3 className="text-lg font-semibold">
                       Résumé des heures et coûts
                     </h3>
+
                     <button
                       onClick={() => setIsHoursOpen(false)}
                       className="rounded-md border border-gray-300 dark:border-gray-600 px-3 py-1 text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -257,12 +287,10 @@ function App() {
                   selectedSlots={selectedSlots}
                   slotToActivityMap={slotToActivityMap}
                   activities={activities}
-                  WEEK_DAYS={WEEK_DAYS}
-                  TIME_SLOTS={TIME_SLOTS}
                   handleMouseDown={handleMouseDown}
                   handleMouseEnter={handleMouseEnter}
-                  clearSelection={clearSelection}
                   setSelectedSlots={setSelectedSlots}
+                  weekStartDate={weekStartDate}
                 />
               </div>
             </div>

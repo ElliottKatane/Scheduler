@@ -1,20 +1,33 @@
 import React from "react";
 import "../CSS/ResizableTable.css";
 import { mergeTimeSlots } from "../utils/mergeTimeSlots";
-import { ResizableTableProps } from "../types";
+import { WEEK_DAYS, TIME_SLOTS, getWeekDates } from "../constants";
+import { Activity } from "../types";
 
-const ResizableTable: React.FC<ResizableTableProps> = ({
+type Props = {
+  selectedSlots: Set<string>;
+  slotToActivityMap: Map<string, string>;
+  activities: Activity[];
+  handleMouseDown: (e: React.MouseEvent<HTMLDivElement>) => void;
+  handleMouseEnter: (e: React.MouseEvent<HTMLDivElement>) => void;
+  setSelectedSlots: React.Dispatch<React.SetStateAction<Set<string>>>;
+  weekStartDate: string; // ISO: "YYYY-MM-DD" (lundi)
+};
+
+const ResizableTable: React.FC<Props> = ({
   selectedSlots,
   slotToActivityMap,
   activities,
-  WEEK_DAYS,
-  TIME_SLOTS,
   handleMouseDown,
   handleMouseEnter,
   setSelectedSlots,
+  weekStartDate,
 }) => {
   const rowHeight = 30;
+  const headerRowHeight = 32; // hauteur de la 1ère ligne sticky (ajuste si besoin)
+
   const merged = mergeTimeSlots(slotToActivityMap);
+  const weekDates = getWeekDates(weekStartDate); // ["05/01/2026", ...]
 
   const slotToMerged = new Map<string, (typeof merged)[0]>();
   const startSlotIds = new Set<string>();
@@ -41,7 +54,7 @@ const ResizableTable: React.FC<ResizableTableProps> = ({
     return `${h > 0 ? `${h}h` : ""}${m > 0 ? `${m}` : ""}`;
   };
 
-  const minutes = ["00", "30"];
+  const minutes = ["00", "30"] as const;
 
   // Largeur min de table: dépend du nombre de jours (évite “je vois que lundi/mardi”)
   // 90px pour la colonne heures + ~140px par jour (ajuste si besoin)
@@ -61,14 +74,41 @@ const ResizableTable: React.FC<ResizableTableProps> = ({
           style={{ minWidth: `${minTableWidth}px` }}
         >
           <thead>
+            {/* Ligne 1: dates */}
             <tr>
               <th
                 className={[
-                  "sticky top-0 left-0 z-40",
+                  "sticky left-0 z-50",
                   "bg-gray-900",
                   "text-left",
                 ].join(" ")}
-                style={{ width: 90 }}
+                style={{ width: 90, top: 0 }}
+              >
+                {/* vide ou "Semaine" */}
+              </th>
+
+              {weekDates.map((d, i) => (
+                <th
+                  key={i}
+                  className={["sticky z-40", "bg-gray-900", "text-center"].join(
+                    " "
+                  )}
+                  style={{ minWidth: 140, top: 0 }}
+                >
+                  {d}
+                </th>
+              ))}
+            </tr>
+
+            {/* Ligne 2: jours */}
+            <tr>
+              <th
+                className={[
+                  "sticky left-0 z-40",
+                  "bg-gray-900",
+                  "text-left",
+                ].join(" ")}
+                style={{ width: 90, top: headerRowHeight }}
               >
                 Heures/jour
               </th>
@@ -76,12 +116,10 @@ const ResizableTable: React.FC<ResizableTableProps> = ({
               {WEEK_DAYS.map((day, i) => (
                 <th
                   key={i}
-                  className={[
-                    "sticky top-0 z-30",
-                    "bg-gray-900",
-                    "text-center",
-                  ].join(" ")}
-                  style={{ minWidth: 140 }}
+                  className={["sticky z-30", "bg-gray-900", "text-center"].join(
+                    " "
+                  )}
+                  style={{ minWidth: 140, top: headerRowHeight }}
                 >
                   {day}
                 </th>

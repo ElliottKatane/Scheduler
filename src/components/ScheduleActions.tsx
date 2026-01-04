@@ -63,7 +63,7 @@ const ScheduleActions: React.FC<Props> = ({
     }
   };
 
-  const handleSaveNew = () => {
+  const handleSaveNew = async () => {
     const name = prompt("Nom de l'emploi du temps :");
     if (!name?.trim()) return;
 
@@ -73,7 +73,7 @@ const ScheduleActions: React.FC<Props> = ({
       data: Array.from(slotToActivityMap.entries()),
     };
 
-    addSchedule(newSchedule);
+    await addSchedule(newSchedule);
     setCurrentSchedule(newSchedule);
     markSaved(slotToActivityMap);
 

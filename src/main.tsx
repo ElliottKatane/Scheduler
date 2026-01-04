@@ -7,6 +7,7 @@ import { BooksAndMoviesProvider } from "./context/BooksAndMoviesContext";
 import { LabelsProvider } from "./context/LabelsContext";
 import "./index.css";
 import App from "./App.tsx";
+import "./firebase";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

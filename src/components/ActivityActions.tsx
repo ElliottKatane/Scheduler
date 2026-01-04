@@ -21,7 +21,6 @@ interface Props {
 }
 
 const ActivityActions: React.FC<Props> = ({
-  activities,
   selectedActivityId,
   setSelectedActivityId,
   onAssignActivity,
@@ -37,23 +36,23 @@ const ActivityActions: React.FC<Props> = ({
 }) => {
   const activityContext = useContext(ActivityContext);
   if (!activityContext) return null;
-  const { addActivity } = activityContext;
+  const { activities: ctxActivities, addActivity } = activityContext;
 
   if (!hasSelection) return null;
 
   // 1) Garder seulement les activités visibles (non masquées)
   const visibleActivities = useMemo(
-    () => activities.filter((a) => !a.hidden),
-    [activities]
+    () => ctxActivities.filter((a) => !a.hidden),
+    [ctxActivities]
   );
 
   // 2) Si l’activité sélectionnée devient masquée ou n’existe plus, on reset
   useEffect(() => {
-    const selected = activities.find((a) => a.id === selectedActivityId);
+    const selected = ctxActivities.find((a) => a.id === selectedActivityId);
     if (!selected || selected.hidden) {
       setSelectedActivityId("");
     }
-  }, [activities, selectedActivityId, setSelectedActivityId]);
+  }, [ctxActivities, selectedActivityId, setSelectedActivityId]);
 
   const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
@@ -156,8 +155,8 @@ const ActivityActions: React.FC<Props> = ({
         <div className="rounded-xl border border-gray-300 bg-white dark:bg-gray-800 p-4 shadow-sm mt-4">
           <CreateActivityModal
             onClose={() => setIsCreating(false)}
-            onCreate={(activity) => {
-              addActivity(activity);
+            onCreate={async (activity) => {
+              await addActivity(activity);
               setSelectedActivityId(activity.id);
               setIsCreating(false);
               onAssignActivity(activity.id);

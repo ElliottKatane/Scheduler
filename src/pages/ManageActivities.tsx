@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useContext } from "react";
+import { useMemo, useState, useContext } from "react";
 import { ActivityContext } from "../context/ActivityContext";
 import { LabelsContext } from "../context/LabelsContext";
 import BulkActivitiesActionsBar from "./ManageActivitiesActions/BulkActivitiesActionsBar";
@@ -133,13 +133,6 @@ const ManageActivities = () => {
       return new Set();
     });
   };
-
-  // -----------------------
-  // Persist (comme tu avais)
-  // -----------------------
-  useEffect(() => {
-    localStorage.setItem("activities", JSON.stringify(activities));
-  }, [activities]);
 
   // -----------------------
   // CRUD activité
@@ -331,7 +324,7 @@ const ManageActivities = () => {
                       setNewLabelInput("");
                     }
                   }}
-                  className="h-11 px-4 rounded border border-gray-600 text-gray-200 hover:bg-gray-800"
+                  className="h-11 px-5 rounded bg-blue-600 text-white hover:bg-blue-700"
                 >
                   Ajouter le label
                 </button>
