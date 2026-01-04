@@ -14,7 +14,7 @@ import {
   doc,
   onSnapshot,
   serverTimestamp,
-  setDoc,
+  setDoc, // méthode built-in
 } from "firebase/firestore";
 
 interface SavedSchedulesContextType {
@@ -31,8 +31,6 @@ export const SavedSchedulesContext =
 // Helpers conversion
 const entriesToObject = (entries: [string, string][]) =>
   Object.fromEntries(entries);
-
-const mapToObject = (m: Map<string, string>) => Object.fromEntries(m);
 
 const objectToEntries = (o: Record<string, string>) =>
   Object.entries(o) as [string, string][];
@@ -186,14 +184,11 @@ export const SavedSchedulesProvider = ({
     await deleteDoc(doc(db, "users", uid, "schedules", id));
   };
 
-  const updateSchedule = async (
-    id: string,
-    data: Map<string, string>
-  ): Promise<void> => {
+  const updateSchedule = async (id: string, data: Map<string, string>) => {
+    const entries = Array.from(data.entries());
+
     setSchedules((prev) =>
-      prev.map((s) =>
-        s.id === id ? { ...s, data: Array.from(data.entries()) } : s
-      )
+      prev.map((s) => (s.id === id ? { ...s, data: entries } : s))
     );
 
     if (!uid) return;
@@ -201,7 +196,7 @@ export const SavedSchedulesProvider = ({
     await setDoc(
       doc(db, "users", uid, "schedules", id),
       {
-        slotToActivityMap: mapToObject(data),
+        data: entries, // <-- IMPORTANT : même forme que partout
         updatedAt: serverTimestamp(),
       },
       { merge: true }
