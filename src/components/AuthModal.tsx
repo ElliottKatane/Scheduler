@@ -7,6 +7,7 @@ import {
   User,
 } from "firebase/auth";
 import { auth } from "../firebase";
+import { toast } from "sonner";
 
 interface Props {
   isOpen: boolean;
@@ -15,6 +16,7 @@ interface Props {
 
 export default function AuthModal({ isOpen, onClose }: Props) {
   const [user, setUser] = useState<User | null>(auth.currentUser);
+  const [isBusy, setIsBusy] = useState(false);
 
   useEffect(() => {
     return onAuthStateChanged(auth, setUser);
@@ -23,15 +25,44 @@ export default function AuthModal({ isOpen, onClose }: Props) {
   if (!isOpen) return null;
 
   const loginGoogle = async () => {
-    const provider = new GoogleAuthProvider();
-    await signInWithPopup(auth, provider);
-    // pas obligé de close, mais tu peux
-    // onClose();
+    if (isBusy) return;
+    setIsBusy(true);
+
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+
+      // Ferme la modal immédiatement
+      onClose();
+
+      // Toast succès
+      const name =
+        result.user.displayName ?? result.user.email ?? "Utilisateur";
+      toast.success("Connexion réussie", { description: name });
+    } catch (err: any) {
+      toast.error("Connexion échouée", {
+        description: err?.message ?? "Une erreur est survenue",
+      });
+    } finally {
+      setIsBusy(false);
+    }
   };
 
   const logout = async () => {
-    await signOut(auth);
-    // onClose();
+    if (isBusy) return;
+    setIsBusy(true);
+
+    try {
+      await signOut(auth);
+      onClose();
+      toast.success("Déconnexion réussie");
+    } catch (err: any) {
+      toast.error("Déconnexion échouée", {
+        description: err?.message ?? "Une erreur est survenue",
+      });
+    } finally {
+      setIsBusy(false);
+    }
   };
 
   return (
@@ -48,24 +79,26 @@ export default function AuthModal({ isOpen, onClose }: Props) {
         <h3 className="text-lg font-semibold mb-4">Connexion</h3>
 
         {user ? (
-          <>
-            <button
-              onClick={logout}
-              className="w-full rounded-xl border border-gray-300 dark:border-gray-600
-                         bg-gray-50 dark:bg-gray-700 px-3 py-2 text-sm font-semibold
-                         hover:bg-gray-100 dark:hover:bg-gray-600"
-            >
-              Se déconnecter
-            </button>
-          </>
+          <button
+            onClick={logout}
+            disabled={isBusy}
+            className="w-full rounded-xl border border-gray-300 dark:border-gray-600
+                       bg-gray-50 dark:bg-gray-700 px-3 py-2 text-sm font-semibold
+                       hover:bg-gray-100 dark:hover:bg-gray-600
+                       disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {isBusy ? "Déconnexion..." : "Se déconnecter"}
+          </button>
         ) : (
           <button
             onClick={loginGoogle}
+            disabled={isBusy}
             className="w-full rounded-xl border border-gray-300 dark:border-gray-600
                        bg-gray-50 dark:bg-gray-700 px-3 py-2 text-sm font-semibold
-                       hover:bg-gray-100 dark:hover:bg-gray-600"
+                       hover:bg-gray-100 dark:hover:bg-gray-600
+                       disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            Se connecter avec Google
+            {isBusy ? "Connexion..." : "Se connecter avec Google"}
           </button>
         )}
       </div>

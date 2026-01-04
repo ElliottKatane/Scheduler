@@ -19,6 +19,14 @@ interface CurrentScheduleContextType {
 export const CurrentScheduleContext =
   createContext<CurrentScheduleContextType | null>(null);
 
+const signatureOf = (m: Map<string, string>) => {
+  // trié => stable, même si l'ordre des entries varie
+  const entries = Array.from(m.entries()).sort(([a], [b]) =>
+    a.localeCompare(b)
+  );
+  return JSON.stringify(entries);
+};
+
 export const CurrentScheduleProvider = ({
   children,
 }: {
@@ -30,34 +38,37 @@ export const CurrentScheduleProvider = ({
   const [currentSchedule, setCurrentSchedule] = useState<SavedSchedule | null>(
     null
   );
-  const [initialData, setInitialData] = useState<Map<string, string>>(
-    new Map()
+
+  // au lieu de stocker une Map, on stocke une signature stable
+  const [initialSignature, setInitialSignature] = useState<string>(() =>
+    signatureOf(new Map())
   );
+
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
-  // ✅ reset automatique quand on change de "mode" (invité <-> connecté) ou de compte
+  // reset auto si changement de compte/mode
   useEffect(() => {
     setCurrentSchedule(null);
-    setInitialData(new Map());
+    setInitialSignature(signatureOf(new Map()));
     setLastSaved(null);
   }, [uid]);
 
   const markSaved = (data: Map<string, string>) => {
-    setInitialData(new Map(data));
+    setInitialSignature(signatureOf(data));
     setLastSaved(new Date());
   };
 
   const hasChanges = (currentData: Map<string, string>) => {
-    if (initialData.size !== currentData.size) return true;
-    for (const [key, value] of initialData.entries()) {
-      if (currentData.get(key) !== value) return true;
-    }
-    return false;
+    return signatureOf(currentData) !== initialSignature;
   };
 
   const handleSetCurrent = (schedule: SavedSchedule | null) => {
     setCurrentSchedule(schedule);
-    setInitialData(schedule ? new Map(schedule.data) : new Map());
+
+    const map = schedule ? new Map<string, string>(schedule.data) : new Map();
+    setInitialSignature(signatureOf(map));
+
+    // option: tu peux garder la date "maintenant" si tu veux
     setLastSaved(schedule ? new Date() : null);
   };
 

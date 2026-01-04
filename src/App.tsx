@@ -12,7 +12,8 @@ import ScheduleActions from "./components/ScheduleActions";
 import ResizableTable from "./components/ResizableTable";
 import ActivityActions from "./components/ActivityActions";
 import { CALENDAR_START, getCurrentWeekMonday } from "./constants";
-
+import { Toaster } from "sonner";
+import { SavedSchedule } from "./types";
 import "./App.css";
 import BooksAndMovies from "./components/BooksAndMovies";
 import HoursSummary from "./components/HoursSummary";
@@ -36,7 +37,8 @@ function App() {
     clearSelection,
     setSelectedSlots,
   } = useSelection();
-  const { currentSchedule, setCurrentSchedule } = useCurrentSchedule();
+  const { currentSchedule, setCurrentSchedule, markSaved } =
+    useCurrentSchedule();
   const [activeTab, setActiveTab] = useState("Emploi du temps");
   const [slotToActivityMap, setSlotToActivityMap] = useState<
     Map<string, string>
@@ -54,12 +56,15 @@ function App() {
   });
   // On essaie de retrouver un emploi du temps qui correspond exactement
   useEffect(() => {
+    // Si on édite déjà un EDT, on ne change pas son identité en fonction des modifications
+    if (currentSchedule) return;
+
     if (slotToActivityMap.size === 0 || schedules.length === 0) {
       setCurrentSchedule(null);
       return;
     }
 
-    let matched: typeof currentSchedule = null;
+    let matched: SavedSchedule | null = null;
 
     for (const schedule of schedules) {
       const savedMap = new Map(schedule.data);
@@ -80,7 +85,7 @@ function App() {
     }
 
     setCurrentSchedule(matched);
-  }, [slotToActivityMap, schedules]);
+  }, [slotToActivityMap, schedules, currentSchedule, setCurrentSchedule]);
 
   useEffect(() => {
     if (uid) return; // connecté => pas de brouillon local
@@ -125,6 +130,7 @@ function App() {
     });
     setError(null);
     setPendingAssignment(null);
+    setHasConflicts(false); // <-- ajoute ça
     setConflictingSlots([]);
     clearSelection();
   };
@@ -172,6 +178,36 @@ function App() {
       return newMap;
     });
   }, [activities]);
+  useEffect(() => {
+    // Si on n'a pas de current schedule, rien à faire
+    if (!currentSchedule) return;
+
+    // Si le schedule courant a été supprimé des saved schedules => wipe total
+    const stillExists = schedules.some((s) => s.id === currentSchedule.id);
+    if (stillExists) return;
+
+    // wipe identité + brouillon + UI
+    setCurrentSchedule(null);
+    setSlotToActivityMap(new Map());
+    clearSelection();
+    setSelectedActivityId("");
+    setPendingAssignment(null);
+    setConflictingSlots([]);
+    setHasConflicts(false);
+
+    // optionnel : reset semaine aussi si tu veux vraiment "retour à 0"
+    // setWeekStartDate(getCurrentWeekMonday());
+  }, [
+    schedules,
+    currentSchedule,
+    setCurrentSchedule,
+    setSlotToActivityMap,
+    clearSelection,
+    setSelectedActivityId,
+    setPendingAssignment,
+    setConflictingSlots,
+    setHasConflicts,
+  ]);
 
   // Surveiller les activités supprimées ou modifiées
   // et nettoyer les créneaux correspondants
@@ -191,6 +227,7 @@ function App() {
   return (
     <section>
       <Navbar onTabChange={setActiveTab} currentSchedule={currentSchedule} />
+      <Toaster richColors position="top-right" closeButton />
 
       <div className="container-main">
         {activeTab === "Emploi du temps" && (
@@ -304,6 +341,7 @@ function App() {
             activities={activities}
             onLoad={(mapData, scheduleId, scheduleName) => {
               const asMap = new Map(mapData);
+              markSaved(asMap); // <- ajoute ça
               setCurrentSchedule({
                 id: scheduleId,
                 name: scheduleName,

@@ -4,6 +4,30 @@ import { LabelsContext } from "../context/LabelsContext";
 import BulkActivitiesActionsBar from "./ManageActivitiesActions/BulkActivitiesActionsBar";
 import ActivityFormCard from "./ManageActivitiesActions/ActivityFormCard";
 
+// -----------------------
+// Helpers (tri activités)
+// -----------------------
+const getPrimaryLabel = (a: { labels?: string[] }) =>
+  (a.labels?.[0] ?? "").trim();
+
+const compareActivities = (
+  a: { name: string; labels?: string[] },
+  b: { name: string; labels?: string[] }
+) => {
+  const la = getPrimaryLabel(a);
+  const lb = getPrimaryLabel(b);
+
+  // sans label d'abord
+  if (!la && lb) return -1;
+  if (la && !lb) return 1;
+
+  // puis label A→Z
+  if (la !== lb) return la.localeCompare(lb, "fr", { sensitivity: "base" });
+
+  // puis nom A→Z
+  return a.name.localeCompare(b.name, "fr", { sensitivity: "base" });
+};
+
 const ManageActivities = () => {
   const activityContext = useContext(ActivityContext);
   const labelsContext = useContext(LabelsContext);
@@ -50,6 +74,12 @@ const ManageActivities = () => {
   const [newLabelInput, setNewLabelInput] = useState("");
 
   // -----------------------
+  // View / Sorting
+  // -----------------------
+  const [viewMode, setViewMode] = useState<"list" | "labels">("list");
+  const [sortEnabled, setSortEnabled] = useState(false);
+
+  // -----------------------
   // Bulk selection
   // -----------------------
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -63,6 +93,32 @@ const ManageActivities = () => {
   const bulkMode = selectedIds.size > 0;
   const selectionMultiple = selectedIds.size > 1;
 
+  // -----------------------
+  // Derived data
+  // -----------------------
+  const displayedActivities = useMemo(() => {
+    const arr = [...activities];
+    if (sortEnabled) arr.sort(compareActivities);
+    return arr;
+  }, [activities, sortEnabled]);
+
+  const groupedByLabel = useMemo(() => {
+    const groups: Record<string, (typeof activities)[number][]> = { "": [] };
+
+    for (const a of displayedActivities) {
+      const labelKey = getPrimaryLabel(a);
+      (groups[labelKey] ??= []).push(a);
+    }
+
+    const keys = Object.keys(groups).sort((a, b) => {
+      if (a === "") return -1;
+      if (b === "") return 1;
+      return a.localeCompare(b, "fr", { sensitivity: "base" });
+    });
+
+    return { groups, keys };
+  }, [displayedActivities]);
+
   const activityById = useMemo(() => {
     const m = new Map<string, (typeof activities)[number]>();
     for (const a of activities) m.set(a.id, a);
@@ -74,6 +130,9 @@ const ManageActivities = () => {
     return activities.every((a) => selectedIds.has(a.id));
   }, [activities, selectedIds]);
 
+  // -----------------------
+  // Helpers UI
+  // -----------------------
   const resetForm = () => {
     setNewActivity({
       name: "",
@@ -86,6 +145,11 @@ const ManageActivities = () => {
     setEditingId(null);
   };
 
+  const clearSelection = () => setSelectedIds(new Set());
+
+  // -----------------------
+  // Selection logic
+  // -----------------------
   const handleRowCheck = (
     e: React.ChangeEvent<HTMLInputElement>,
     id: string
@@ -95,7 +159,7 @@ const ManageActivities = () => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
 
-      // shift + clic + anchor -> range
+      // shift + clic + anchor -> range (ordre actuel: activities, pas trié)
       if (
         e.nativeEvent instanceof MouseEvent &&
         (e.nativeEvent as MouseEvent).shiftKey &&
@@ -123,14 +187,25 @@ const ManageActivities = () => {
     setLastClickedId(id);
   };
 
-  const clearSelection = () => setSelectedIds(new Set());
-
   const toggleSelectAll = () => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
       const shouldSelectAll = !activities.every((a) => next.has(a.id));
       if (shouldSelectAll) return new Set(activities.map((a) => a.id));
       return new Set();
+    });
+  };
+
+  const toggleLabelSelection = (labelKey: string) => {
+    const acts = groupedByLabel.groups[labelKey] ?? [];
+    const ids = acts.map((a) => a.id);
+    const isAllSelected =
+      ids.length > 0 && ids.every((id) => selectedIds.has(id));
+
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      ids.forEach((id) => (isAllSelected ? next.delete(id) : next.add(id)));
+      return next;
     });
   };
 
@@ -251,15 +326,114 @@ const ManageActivities = () => {
     clearSelection();
   };
 
+  // -----------------------
+  // Render row (réutilisé dans les 2 vues)
+  // -----------------------
+  const renderActivityRow = (activity: (typeof activities)[number]) => {
+    const isSelected = selectedIds.has(activity.id);
+    const disableRowActions = selectionMultiple;
+
+    return (
+      <>
+        <div className="flex items-center gap-3 flex-wrap">
+          <input
+            type="checkbox"
+            checked={isSelected}
+            onChange={(e) => handleRowCheck(e, activity.id)}
+            className="w-4 h-4"
+            aria-label={`Sélectionner ${activity.name}`}
+          />
+
+          <span
+            className={`font-semibold ${
+              activity.hidden ? "opacity-50 italic" : ""
+            }`}
+            style={{ color: activity.color }}
+          >
+            {activity.name}
+          </span>
+
+          {activity.labels?.map((label) => (
+            <span
+              key={label}
+              className="px-2 py-0.5 border border-gray-400 rounded text-xs text-gray-300"
+            >
+              {label}
+            </span>
+          ))}
+
+          {activity.hidden && (
+            <span className="px-2 py-0.5 border border-yellow-600 rounded text-xs text-yellow-400">
+              masquée
+            </span>
+          )}
+
+          <span className="text-xs text-gray-400 border border-gray-500 rounded px-2 py-0.5">
+            {activity.hourlyRate != null
+              ? `${activity.hourlyRate.toFixed(2)} /h`
+              : "taux non assigné"}
+          </span>
+        </div>
+
+        <div className="flex gap-2">
+          <button
+            onClick={() => toggleHidden(activity.id)}
+            disabled={disableRowActions}
+            className={`text-sm px-2 py-1 rounded border border-gray-500 hover:bg-gray-700 ${
+              disableRowActions ? "opacity-40 cursor-not-allowed" : ""
+            }`}
+            title={
+              disableRowActions
+                ? "Actions individuelles désactivées en sélection multiple"
+                : ""
+            }
+          >
+            {activity.hidden ? "Afficher" : "Masquer"}
+          </button>
+
+          <button
+            onClick={() => handleEdit(activity.id)}
+            disabled={disableRowActions}
+            className={`text-sm px-2 py-1 rounded border border-orange-500 hover:bg-orange-600 ${
+              disableRowActions ? "opacity-40 cursor-not-allowed" : ""
+            }`}
+            title={
+              disableRowActions
+                ? "Actions individuelles désactivées en sélection multiple"
+                : ""
+            }
+          >
+            Modifier
+          </button>
+
+          <button
+            onClick={() => handleDelete(activity.id)}
+            disabled={disableRowActions}
+            className={`text-sm px-2 py-1 rounded border border-red-500 hover:bg-red-700 ${
+              disableRowActions ? "opacity-40 cursor-not-allowed" : ""
+            }`}
+            title={
+              disableRowActions
+                ? "Actions individuelles désactivées en sélection multiple"
+                : ""
+            }
+          >
+            Supprimer
+          </button>
+        </div>
+      </>
+    );
+  };
+
   return (
     <div className="p-4 space-y-6">
-      {/* Form area */}
+      {/* =======================
+          FORM / BULK AREA
+         ======================= */}
       <div className="rounded-xl border border-gray-700 bg-gray-900/40 p-4 md:p-6">
         <div className="mx-auto w-full max-w-5xl">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
-            {/* =======================
-                COLONNE GAUCHE : form OU bulk
-               ======================= */}
+            {/* COLONNE GAUCHE */}
             <div className="lg:col-span-8">
               {bulkMode ? (
                 <BulkActivitiesActionsBar
@@ -288,15 +462,11 @@ const ManageActivities = () => {
               )}
             </div>
 
-            {/* =======================
-                ENCARTE DROIT : LABEL GLOBAL (inchangé)
-               ======================= */}
+            {/* COLONNE DROITE – LABELS */}
             <div className="lg:col-span-4 rounded-xl border border-gray-700 bg-gray-950/10 p-4 md:p-5 space-y-4">
-              <div className="space-y-1">
-                <h4 className="text-base font-semibold text-white">
-                  Créer un label
-                </h4>
-              </div>
+              <h4 className="text-base font-semibold text-white">
+                Créer un label
+              </h4>
 
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1">
@@ -307,15 +477,11 @@ const ManageActivities = () => {
                   placeholder="Ex : urgent, admin, perso..."
                   value={newLabelInput}
                   onChange={(e) => setNewLabelInput(e.target.value)}
-                  className="w-full h-11 rounded border border-gray-600 px-3 bg-gray-800 text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  className="w-full h-11 rounded border border-gray-600 px-3 bg-gray-800 text-white"
                 />
-                <p className="mt-1 text-xs text-gray-500">
-                  Créer un label n’ajoute rien automatiquement à l’activité en
-                  cours.
-                </p>
               </div>
 
-              <div className="flex items-center justify-end">
+              <div className="flex justify-end">
                 <button
                   type="button"
                   onClick={() => {
@@ -330,29 +496,43 @@ const ManageActivities = () => {
                 </button>
               </div>
 
-              <div className="pt-2">
+              <div>
                 <div className="text-xs font-medium text-gray-400 mb-2">
                   Labels existants
                 </div>
+
                 {labels.length === 0 ? (
-                  <div className="text-sm text-gray-500">
+                  <p className="text-sm text-gray-500">
                     Aucun label pour le moment.
-                  </div>
+                  </p>
                 ) : (
                   <div className="flex flex-wrap gap-2">
-                    {labels.slice(0, 12).map((label) => (
+                    {labels.map((label) => (
                       <span
                         key={label}
-                        className="px-2 py-0.5 rounded-full border border-gray-600 bg-gray-800 text-xs text-gray-200"
+                        className="flex items-center gap-1 px-2 py-0.5 border border-gray-600 rounded-full bg-gray-800 text-xs text-gray-200"
                       >
-                        {label}
+                        <span>{label}</span>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (
+                              confirm(
+                                `Supprimer le label "${label}" ? Cela ne modifiera pas les activités existantes.`
+                              )
+                            ) {
+                              deleteLabel(label);
+                            }
+                          }}
+                          className="text-red-400 hover:text-red-500 ml-1"
+                          aria-label={`Supprimer le label ${label}`}
+                          title={`Supprimer le label ${label}`}
+                        >
+                          ×
+                        </button>
                       </span>
                     ))}
-                    {labels.length > 12 && (
-                      <span className="text-xs text-gray-500">
-                        + {labels.length - 12}
-                      </span>
-                    )}
                   </div>
                 )}
               </div>
@@ -361,163 +541,119 @@ const ManageActivities = () => {
         </div>
       </div>
 
-      {/* Labels list (with delete) */}
-      <h4 className="text-lg font-bold text-white">
-        Labels existants (globaux)
-      </h4>
-      <div className="flex flex-wrap gap-2">
-        {labels.length === 0 && (
-          <p className="text-gray-400 text-sm">Aucun label pour le moment.</p>
-        )}
-        {labels.map((label) => (
-          <span
-            key={label}
-            className="flex items-center space-x-1 px-2 py-0.5 border border-gray-400 rounded text-xs text-gray-300"
-          >
-            <span>{label}</span>
-            <button
-              type="button"
-              onClick={() => {
-                if (
-                  confirm(
-                    `Supprimer le label "${label}" ? Cela ne modifiera pas les activités existantes.`
-                  )
-                ) {
-                  deleteLabel(label);
-                }
-              }}
-              className="text-red-400 hover:text-red-500 ml-1"
-              aria-label={`Supprimer le label ${label}`}
-              title={`Supprimer le label ${label}`}
-            >
-              x
-            </button>
-          </span>
-        ))}
-      </div>
-
-      {/* Activities list header */}
-      <div className="flex items-center justify-between">
+      {/* =======================
+          HEADER ACTIVITÉS
+         ======================= */}
+      <div className="flex items-center justify-between gap-2">
         <h4 className="text-lg font-bold text-white">Activités</h4>
 
-        {activities.length > 0 && (
+        <div className="flex gap-2">
           <button
             type="button"
-            onClick={toggleSelectAll}
+            onClick={() =>
+              setViewMode((v) => (v === "list" ? "labels" : "list"))
+            }
             className="text-sm px-3 py-2 rounded border border-gray-600 text-gray-200 hover:bg-gray-800"
           >
-            {allSelected ? "Tout désélectionner" : "Tout sélectionner"}
+            Vue : {viewMode === "list" ? "Liste" : "Labels"}
           </button>
-        )}
+
+          <button
+            type="button"
+            onClick={() => setSortEnabled((v) => !v)}
+            className="text-sm px-3 py-2 rounded border border-gray-600 text-gray-200 hover:bg-gray-800"
+          >
+            {sortEnabled ? "Désactiver le tri" : "Trier A→Z"}
+          </button>
+
+          {activities.length > 0 && (
+            <button
+              type="button"
+              onClick={toggleSelectAll}
+              className="text-sm px-3 py-2 rounded border border-gray-600 text-gray-200 hover:bg-gray-800"
+            >
+              {allSelected ? "Tout désélectionner" : "Tout sélectionner"}
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* Activities list */}
-      <ul className="space-y-2">
-        {activities.map((activity) => {
-          const isSelected = selectedIds.has(activity.id);
-          const disableRowActions = selectionMultiple;
+      {/* =======================
+          VUE LISTE
+         ======================= */}
+      {viewMode === "list" && (
+        <ul className="space-y-2">
+          {displayedActivities.map((activity) => {
+            const isSelected = selectedIds.has(activity.id);
 
-          return (
-            <li
-              key={activity.id}
-              className={`flex justify-between items-center p-2 border rounded ${
-                isSelected
-                  ? "border-blue-600 bg-blue-950/20"
-                  : "border-gray-600"
-              }`}
-            >
-              <div className="flex items-center gap-3 flex-wrap">
-                <input
-                  type="checkbox"
-                  checked={isSelected}
-                  onChange={(e) => handleRowCheck(e, activity.id)}
-                  className="w-4 h-4"
-                  aria-label={`Sélectionner ${activity.name}`}
-                />
+            return (
+              <li
+                key={activity.id}
+                className={`flex justify-between items-center p-2 border rounded ${
+                  isSelected
+                    ? "border-blue-600 bg-blue-950/20"
+                    : "border-gray-600"
+                }`}
+              >
+                {renderActivityRow(activity)}
+              </li>
+            );
+          })}
+        </ul>
+      )}
 
-                <span
-                  className={`font-semibold ${
-                    activity.hidden ? "opacity-50 italic" : ""
-                  }`}
-                  style={{ color: activity.color }}
+      {/* =======================
+          VUE LABELS
+         ======================= */}
+      {viewMode === "labels" && (
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {groupedByLabel.keys.map((labelKey) => {
+            const title = labelKey || "Sans label";
+            const acts = groupedByLabel.groups[labelKey];
+            const ids = acts.map((a) => a.id);
+            const allSel =
+              ids.length > 0 && ids.every((id) => selectedIds.has(id));
+
+            return (
+              <div
+                key={labelKey}
+                className="rounded-xl border border-gray-600 p-3"
+              >
+                <button
+                  type="button"
+                  onClick={() => toggleLabelSelection(labelKey)}
+                  className="w-full text-left font-semibold mb-3 flex justify-between"
                 >
-                  {activity.name}
-                </span>
-
-                {activity.labels?.map((label) => (
-                  <span
-                    key={label}
-                    className="px-2 py-0.5 border border-gray-400 rounded text-xs text-gray-300"
-                  >
-                    {label}
+                  <span>{title}</span>
+                  <span className="text-sm opacity-70">
+                    {allSel ? "Tout sélectionné" : acts.length}
                   </span>
-                ))}
+                </button>
 
-                {activity.hidden && (
-                  <span className="px-2 py-0.5 border border-yellow-600 rounded text-xs text-yellow-400">
-                    masquée
-                  </span>
-                )}
+                <div className="space-y-2">
+                  {acts.map((activity) => {
+                    const isSelected = selectedIds.has(activity.id);
 
-                <span className="text-xs text-gray-400 border border-gray-500 rounded px-2 py-0.5">
-                  {activity.hourlyRate != null
-                    ? `${activity.hourlyRate.toFixed(2)} /h`
-                    : "taux non assigné"}
-                </span>
+                    return (
+                      <div
+                        key={activity.id}
+                        className={`flex justify-between items-center p-2 border rounded ${
+                          isSelected
+                            ? "border-blue-600 bg-blue-950/20"
+                            : "border-gray-600"
+                        }`}
+                      >
+                        {renderActivityRow(activity)}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-
-              <div className="flex gap-2">
-                <button
-                  onClick={() => toggleHidden(activity.id)}
-                  disabled={disableRowActions}
-                  className={`text-sm px-2 py-1 rounded border border-gray-500 hover:bg-gray-700 ${
-                    disableRowActions ? "opacity-40 cursor-not-allowed" : ""
-                  }`}
-                  title={
-                    disableRowActions
-                      ? "Actions individuelles désactivées en sélection multiple"
-                      : ""
-                  }
-                >
-                  {activity.hidden ? "Afficher" : "Masquer"}
-                </button>
-
-                <button
-                  onClick={() => handleEdit(activity.id)}
-                  disabled={disableRowActions}
-                  className={`text-sm px-2 py-1 rounded border border-orange-500 hover:bg-orange-600 ${
-                    disableRowActions ? "opacity-40 cursor-not-allowed" : ""
-                  }`}
-                  title={
-                    disableRowActions
-                      ? "Actions individuelles désactivées en sélection multiple"
-                      : ""
-                  }
-                >
-                  Modifier
-                </button>
-
-                <button
-                  onClick={() => handleDelete(activity.id)}
-                  disabled={disableRowActions}
-                  className={`text-sm px-2 py-1 rounded border border-red-500 hover:bg-red-700 ${
-                    disableRowActions ? "opacity-40 cursor-not-allowed" : ""
-                  }`}
-                  title={
-                    disableRowActions
-                      ? "Actions individuelles désactivées en sélection multiple"
-                      : ""
-                  }
-                >
-                  Supprimer
-                </button>
-              </div>
-            </li>
-          );
-        })}
-      </ul>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };
-
 export default ManageActivities;

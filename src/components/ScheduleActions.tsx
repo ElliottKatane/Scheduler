@@ -2,6 +2,7 @@ import { SavedSchedule } from "../types";
 import { useEffect, useState } from "react";
 import { useSavedSchedules } from "../context/SavedSchedulesContext";
 import { useCurrentSchedule } from "../context/CurrentScheduleContext";
+import { toast } from "sonner";
 
 interface Props {
   slotToActivityMap: Map<string, string>;
@@ -12,8 +13,6 @@ interface Props {
   setConflictingSlots: (slots: string[]) => void;
   setHasConflicts: (has: boolean) => void;
 }
-
-type ToastKind = "success" | "info" | "error";
 
 const ScheduleActions: React.FC<Props> = ({
   slotToActivityMap,
@@ -29,16 +28,6 @@ const ScheduleActions: React.FC<Props> = ({
     useCurrentSchedule();
 
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-
-  // Toast (option 1 : pur Tailwind, sans config)
-  const [toast, setToast] = useState<{ msg: string; kind: ToastKind } | null>(
-    null
-  );
-
-  const showToast = (msg: string, kind: ToastKind = "info") => {
-    setToast({ msg, kind });
-    window.setTimeout(() => setToast(null), 2200);
-  };
 
   useEffect(() => {
     const unsaved = currentSchedule !== null && hasChanges(slotToActivityMap);
@@ -59,7 +48,7 @@ const ScheduleActions: React.FC<Props> = ({
     ) {
       setSlotToActivityMap(new Map());
       resetUIState();
-      showToast("Emploi du temps réinitialisé.", "info");
+      toast.info("Emploi du temps réinitialisé");
     }
   };
 
@@ -77,7 +66,7 @@ const ScheduleActions: React.FC<Props> = ({
     setCurrentSchedule(newSchedule);
     markSaved(slotToActivityMap);
 
-    showToast("Emploi du temps sauvegardé.", "success");
+    toast.success("Emploi du temps sauvegardé");
   };
 
   const handleUpdateExisting = () => {
@@ -86,22 +75,15 @@ const ScheduleActions: React.FC<Props> = ({
     updateSchedule(currentSchedule.id, slotToActivityMap);
     markSaved(slotToActivityMap);
 
-    showToast("Emploi du temps mis à jour.", "success");
+    toast.success("Emploi du temps mis à jour");
   };
 
   const handleNewSchedule = () => {
     setCurrentSchedule(null);
     setSlotToActivityMap(new Map());
     resetUIState();
-    showToast("Nouveau planning prêt.", "info");
+    toast.info("Nouveau planning prêt");
   };
-
-  const toastClasses =
-    toast?.kind === "success"
-      ? "border-green-700/60 bg-green-950/70 text-green-100"
-      : toast?.kind === "error"
-      ? "border-red-700/60 bg-red-950/70 text-red-100"
-      : "border-gray-700 bg-gray-950/80 text-white";
 
   return (
     <div className="rounded-xl border border-gray-300 bg-white dark:bg-gray-800 p-4 shadow-sm space-y-4">
@@ -142,21 +124,6 @@ const ScheduleActions: React.FC<Props> = ({
           </button>
         )}
       </div>
-
-      {toast && (
-        <div
-          className={[
-            "fixed bottom-6 right-6 z-50",
-            "rounded-lg border px-4 py-2 shadow-lg",
-            "transition-all duration-200 ease-out opacity-100 translate-y-0",
-            toastClasses,
-          ].join(" ")}
-          role="status"
-          aria-live="polite"
-        >
-          {toast.msg}
-        </div>
-      )}
     </div>
   );
 };

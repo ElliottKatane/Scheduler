@@ -35,16 +35,35 @@ const ActivityActions: React.FC<Props> = ({
   setIsCreating,
 }) => {
   const activityContext = useContext(ActivityContext);
+  const getPrimaryLabel = (a: { labels?: string[] }) =>
+    (a.labels?.[0] ?? "").trim();
+
+  const compareActivities = (
+    a: { name: string; labels?: string[] },
+    b: { name: string; labels?: string[] }
+  ) => {
+    const la = getPrimaryLabel(a);
+    const lb = getPrimaryLabel(b);
+
+    if (!la && lb) return -1;
+    if (la && !lb) return 1;
+    if (la !== lb) return la.localeCompare(lb, "fr", { sensitivity: "base" });
+
+    return a.name.localeCompare(b.name, "fr", { sensitivity: "base" });
+  };
+
   if (!activityContext) return null;
   const { activities: ctxActivities, addActivity } = activityContext;
 
   if (!hasSelection) return null;
 
   // 1) Garder seulement les activités visibles (non masquées)
-  const visibleActivities = useMemo(
-    () => ctxActivities.filter((a) => !a.hidden),
-    [ctxActivities]
-  );
+  const visibleActivities = useMemo(() => {
+    return ctxActivities
+      .filter((a) => !a.hidden)
+      .slice()
+      .sort(compareActivities);
+  }, [ctxActivities]);
 
   // 2) Si l’activité sélectionnée devient masquée ou n’existe plus, on reset
   useEffect(() => {
@@ -92,11 +111,16 @@ const ActivityActions: React.FC<Props> = ({
             <option value="">-- Choisir une activité --</option>
 
             {/* 3) N’afficher que les activités non masquées */}
-            {visibleActivities.map((act) => (
-              <option key={act.id} value={act.id}>
-                {act.name}
-              </option>
-            ))}
+            {visibleActivities.map((act) => {
+              const label = act.labels?.[0];
+
+              return (
+                <option key={act.id} value={act.id}>
+                  {act.name}
+                  {label ? `  —  ${label}` : ""}
+                </option>
+              );
+            })}
 
             <option value="__new__">+ Créer une nouvelle activité...</option>
           </select>
