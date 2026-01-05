@@ -46,8 +46,7 @@ const Navbar: React.FC<NavbarProps> = ({ onTabChange, currentSchedule }) => {
       {currentSchedule && (
         <div className="text-sm text-gray-600 dark:text-gray-300 ml-4">
           <p>
-            <strong>Édition :</strong> {currentSchedule.name} (ID:{" "}
-            {currentSchedule.id})
+            <strong>Édition :</strong> {currentSchedule.name}
           </p>
         </div>
       )}
