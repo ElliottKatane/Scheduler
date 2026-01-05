@@ -12,8 +12,10 @@ type Row = {
 
 const HoursSummary = ({
   variant = "sidebar",
+  slotToActivityMap,
 }: {
   variant?: "sidebar" | "modal";
+  slotToActivityMap: Map<string, string>;
 }) => {
   const context = useContext(CurrentScheduleContext);
   const activityContext = useContext(ActivityContext);
@@ -22,10 +24,7 @@ const HoursSummary = ({
 
   if (!context || !activityContext) return null;
 
-  const { currentSchedule } = context;
   const { activities } = activityContext;
-
-  if (!currentSchedule) return null;
 
   const rows = useMemo((): Row[] => {
     // Map id -> activity (perf + évite find() dans la boucle)
@@ -50,7 +49,7 @@ const HoursSummary = ({
       }
     > = {};
 
-    for (const [, activityId] of currentSchedule.data) {
+    for (const [, activityId] of slotToActivityMap.entries()) {
       const act = byId.get(activityId);
       if (!act) continue;
 
@@ -111,7 +110,7 @@ const HoursSummary = ({
     });
 
     return out;
-  }, [currentSchedule.data, activities, groupByLabel]);
+  }, [slotToActivityMap, activities, groupByLabel]);
 
   const hasData = rows.length > 0;
 

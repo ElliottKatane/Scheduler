@@ -311,7 +311,10 @@ function App() {
                   </div>
 
                   <div className="p-5">
-                    <HoursSummary variant="modal" />
+                    <HoursSummary
+                      variant="modal"
+                      slotToActivityMap={slotToActivityMap}
+                    />
                   </div>
                 </div>
               </div>

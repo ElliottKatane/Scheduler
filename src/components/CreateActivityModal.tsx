@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { Activity } from "../types";
+import { useContext } from "react";
+import { LabelsContext } from "../context/LabelsContext";
 
 interface Props {
   onClose: () => void;
@@ -9,6 +11,7 @@ interface Props {
 const CreateActivityModal: React.FC<Props> = ({ onClose, onCreate }) => {
   const [name, setName] = useState("");
   const [color, setColor] = useState("#00cc88");
+  const labelsCtx = useContext(LabelsContext);
 
   // NEW
   const [label, setLabel] = useState(""); // un seul label pour commencer
@@ -19,15 +22,21 @@ const CreateActivityModal: React.FC<Props> = ({ onClose, onCreate }) => {
 
     const rate = hourlyRate.trim() === "" ? undefined : Number(hourlyRate);
 
+    const trimmed = label.trim();
+
     const newActivity: Activity = {
       id: crypto.randomUUID(),
       name: name.trim(),
       color,
-      labels: label.trim() ? [label.trim()] : undefined,
-      hourlyRate: Number.isFinite(rate as number)
-        ? (rate as number)
-        : undefined,
+      ...(trimmed ? { labels: [trimmed] } : {}),
+      ...(Number.isFinite(rate as number)
+        ? { hourlyRate: rate as number }
+        : {}),
     };
+
+    await onCreate(newActivity);
+
+    if (trimmed) labelsCtx?.addLabel(trimmed);
 
     await onCreate(newActivity);
 

@@ -1,6 +1,13 @@
 import { createContext, useEffect, useState, ReactNode, useMemo } from "react";
 import { onAuthStateChanged } from "firebase/auth";
-import { doc, onSnapshot, setDoc, serverTimestamp } from "firebase/firestore";
+import {
+  doc,
+  serverTimestamp,
+  setDoc,
+  updateDoc,
+  arrayUnion,
+  onSnapshot,
+} from "firebase/firestore";
 import { auth, db } from "../firebase";
 
 interface LabelsContextType {
@@ -55,24 +62,21 @@ export const LabelsProvider = ({ children }: { children: ReactNode }) => {
     const trimmed = label.trim();
     if (!trimmed) return;
 
-    // local state update (optimistic)
+    // UI: optimistic
     setLabels((prev) => (prev.includes(trimmed) ? prev : [...prev, trimmed]));
 
     if (!uid) return;
 
-    // write the whole array (simple + safe enough for small lists)
-    const next = (prev: string[]) =>
-      prev.includes(trimmed) ? prev : [...prev, trimmed];
+    const ref = doc(db, "users", uid, "meta", "labels");
 
-    // We need current labels; easiest is to compute from state snapshot:
-    // (since setState is async, we write using a derived array)
-    const nextLabels = next(labels);
+    // crée si absent + merge
+    await setDoc(ref, { updatedAt: serverTimestamp() }, { merge: true });
 
-    await setDoc(
-      doc(db, "users", uid, "meta", "labels"),
-      { labels: nextLabels, updatedAt: serverTimestamp() },
-      { merge: true }
-    );
+    // ajoute sans doublon (Firestore gère)
+    await updateDoc(ref, {
+      labels: arrayUnion(trimmed),
+      updatedAt: serverTimestamp(),
+    });
   };
 
   const deleteLabel = async (label: string) => {
