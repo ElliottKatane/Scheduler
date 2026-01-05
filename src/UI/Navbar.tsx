@@ -22,6 +22,9 @@ const Navbar: React.FC<NavbarProps> = ({ onTabChange, currentSchedule }) => {
     "Livres / Films",
     "Debug",
   ];
+  const gitSha = import.meta.env.VITE_GIT_SHA as string | undefined;
+  const shortSha = gitSha ? gitSha.slice(0, 7) : "dev";
+
   const { user, isOnlineMode } = useAuthStatus();
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   return (
@@ -77,6 +80,7 @@ const Navbar: React.FC<NavbarProps> = ({ onTabChange, currentSchedule }) => {
       </div>
 
       <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
+      <span className="text-xs text-gray-400">v{shortSha}</span>
     </nav>
   );
 };

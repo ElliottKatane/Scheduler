@@ -20,6 +20,23 @@ interface Props {
   setIsCreating: (value: boolean) => void;
 }
 
+const getPrimaryLabel = (a: { labels?: string[] }) =>
+  (a.labels?.[0] ?? "").trim();
+
+const compareActivities = (
+  a: { name: string; labels?: string[] },
+  b: { name: string; labels?: string[] }
+) => {
+  const la = getPrimaryLabel(a);
+  const lb = getPrimaryLabel(b);
+
+  if (!la && lb) return -1;
+  if (la && !lb) return 1;
+  if (la !== lb) return la.localeCompare(lb, "fr", { sensitivity: "base" });
+
+  return a.name.localeCompare(b.name, "fr", { sensitivity: "base" });
+};
+
 const ActivityActions: React.FC<Props> = ({
   selectedActivityId,
   setSelectedActivityId,
@@ -35,29 +52,12 @@ const ActivityActions: React.FC<Props> = ({
   setIsCreating,
 }) => {
   const activityContext = useContext(ActivityContext);
-  const getPrimaryLabel = (a: { labels?: string[] }) =>
-    (a.labels?.[0] ?? "").trim();
 
-  const compareActivities = (
-    a: { name: string; labels?: string[] },
-    b: { name: string; labels?: string[] }
-  ) => {
-    const la = getPrimaryLabel(a);
-    const lb = getPrimaryLabel(b);
+  // ✅ Toujours définir des valeurs "fallback" pour que les hooks tournent quand même
+  const ctxActivities = activityContext?.activities ?? [];
+  const addActivity = activityContext?.addActivity;
 
-    if (!la && lb) return -1;
-    if (la && !lb) return 1;
-    if (la !== lb) return la.localeCompare(lb, "fr", { sensitivity: "base" });
-
-    return a.name.localeCompare(b.name, "fr", { sensitivity: "base" });
-  };
-
-  if (!activityContext) return null;
-  const { activities: ctxActivities, addActivity } = activityContext;
-
-  if (!hasSelection) return null;
-
-  // 1) Garder seulement les activités visibles (non masquées)
+  // ✅ Hooks TOUJOURS appelés (jamais après un return conditionnel)
   const visibleActivities = useMemo(() => {
     return ctxActivities
       .filter((a) => !a.hidden)
@@ -65,8 +65,8 @@ const ActivityActions: React.FC<Props> = ({
       .sort(compareActivities);
   }, [ctxActivities]);
 
-  // 2) Si l’activité sélectionnée devient masquée ou n’existe plus, on reset
   useEffect(() => {
+    // Si l’activité sélectionnée devient masquée ou n’existe plus, on reset
     const selected = ctxActivities.find((a) => a.id === selectedActivityId);
     if (!selected || selected.hidden) {
       setSelectedActivityId("");
@@ -91,6 +91,10 @@ const ActivityActions: React.FC<Props> = ({
 
   const noVisible = visibleActivities.length === 0;
 
+  // ✅ Maintenant seulement: conditions de render
+  if (!activityContext) return null;
+  if (!hasSelection) return null;
+
   return (
     <>
       <div className="rounded-xl border border-gray-300 bg-white dark:bg-gray-800 p-4 shadow-sm space-y-4">
@@ -110,10 +114,8 @@ const ActivityActions: React.FC<Props> = ({
           >
             <option value="">-- Choisir une activité --</option>
 
-            {/* 3) N’afficher que les activités non masquées */}
             {visibleActivities.map((act) => {
               const label = act.labels?.[0];
-
               return (
                 <option key={act.id} value={act.id}>
                   {act.name}
@@ -174,12 +176,12 @@ const ActivityActions: React.FC<Props> = ({
         )}
       </div>
 
-      {/* Modal */}
       {isCreating && (
         <div className="rounded-xl border border-gray-300 bg-white dark:bg-gray-800 p-4 shadow-sm mt-4">
           <CreateActivityModal
             onClose={() => setIsCreating(false)}
             onCreate={async (activity) => {
+              if (!addActivity) return;
               await addActivity(activity);
               setSelectedActivityId(activity.id);
               setIsCreating(false);
