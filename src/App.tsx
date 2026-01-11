@@ -11,7 +11,14 @@ import { useSavedSchedules } from "./context/SavedSchedulesContext";
 import ScheduleActions from "./components/ScheduleActions";
 import ResizableTable from "./components/ResizableTable";
 import ActivityActions from "./components/ActivityActions";
-import { CALENDAR_START, getCurrentWeekMonday } from "./constants";
+import EarningsCalculator from "./components/EarningsCalculator";
+import {
+  addDays,
+  formatWeekLabel,
+  getCurrentWeekMonday,
+  parseISODate,
+  toMonday,
+} from "./constants";
 import { Toaster } from "sonner";
 import { SavedSchedule } from "./types";
 import "./App.css";
@@ -23,7 +30,9 @@ function App() {
   if (!activityContext) return null; // ou fallback/chargement si besoin
   const [selectedActivityId, setSelectedActivityId] = useState<string>("");
   const [isCreating, setIsCreating] = useState(false);
-  const [weekStartDate, setWeekStartDate] = useState<string>(CALENDAR_START);
+  const [weekStartDate, setWeekStartDate] = useState<Date>(
+    getCurrentWeekMonday()
+  );
   const { user } = useAuthStatus();
   const uid = user?.uid ?? null;
   const { activities } = activityContext;
@@ -130,7 +139,7 @@ function App() {
     });
     setError(null);
     setPendingAssignment(null);
-    setHasConflicts(false); // <-- ajoute ça
+    setHasConflicts(false);
     setConflictingSlots([]);
     clearSelection();
   };
@@ -226,9 +235,12 @@ function App() {
 
   return (
     <section>
-      <Navbar onTabChange={setActiveTab} currentSchedule={currentSchedule} />
+      <Navbar
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        currentSchedule={currentSchedule}
+      />
       <Toaster richColors position="top-right" closeButton />
-
       <div className="container-main">
         {activeTab === "Emploi du temps" && (
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
@@ -276,6 +288,7 @@ function App() {
                   setPendingAssignment={setPendingAssignment}
                   setConflictingSlots={setConflictingSlots}
                   setHasConflicts={setHasConflicts}
+                  weekStartDate={weekStartDate}
                 />
 
                 <button
@@ -322,6 +335,34 @@ function App() {
 
             {/* CALENDAR -> min-w-0 sinon le scroll horizontal est cassé dans un flex row */}
             <div className="w-full min-w-0">
+              <div className="mb-3 flex items-center justify-center gap-3">
+                <button
+                  onClick={() => setWeekStartDate(addDays(weekStartDate, -7))}
+                  className="rounded-md border px-3 py-1 text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  ←
+                </button>
+
+                <span className="text-sm font-medium">
+                  Semaine du {formatWeekLabel(weekStartDate)}
+                </span>
+
+                <button
+                  onClick={() => setWeekStartDate(addDays(weekStartDate, 7))}
+                  className="rounded-md border px-3 py-1 text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  →
+                </button>
+                <input
+                  type="date"
+                  className="rounded-md border px-2 py-1 text-sm"
+                  onChange={(e) => {
+                    if (!e.target.value) return;
+                    setWeekStartDate(toMonday(new Date(e.target.value)));
+                  }}
+                />
+              </div>
+
               <div className="calendar-section">
                 <ResizableTable
                   selectedSlots={selectedSlots}
@@ -338,23 +379,26 @@ function App() {
         )}
 
         {activeTab === "Gérer les activités" && <ManageActivities />}
+        {activeTab === "Revenus" && <EarningsCalculator />}
 
         {activeTab === "Mes emplois du temps" && (
           <SavedSchedules
             activities={activities}
-            onLoad={(mapData, scheduleId, scheduleName) => {
-              const asMap = new Map(mapData);
-              markSaved(asMap); // <- ajoute ça
-              setCurrentSchedule({
-                id: scheduleId,
-                name: scheduleName,
-                data: mapData,
-              });
+            onLoad={(schedule) => {
+              const asMap = new Map(schedule.data);
+              markSaved(asMap);
+              setCurrentSchedule(schedule);
               setSlotToActivityMap(asMap);
+              if (schedule.weekStartDate) {
+                // permet d'afficher la bonne semaine au onLoad dans "EDT"
+                setWeekStartDate(parseISODate(schedule.weekStartDate));
+              }
+
               setSelectedActivityId("");
               setPendingAssignment(null);
               setConflictingSlots([]);
               setHasConflicts(false);
+              setActiveTab("Emploi du temps");
             }}
           />
         )}

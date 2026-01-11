@@ -29,4 +29,5 @@ export interface SavedSchedule {
   id: string;
   name: string;
   data: [string, string][]; // slotToActivityMap
+  weekStartDate: string; // YYYY-MM-DD (lundi ISO)
 }

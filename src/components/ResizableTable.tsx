@@ -11,7 +11,7 @@ type Props = {
   handleMouseDown: (e: React.MouseEvent<HTMLDivElement>) => void;
   handleMouseEnter: (e: React.MouseEvent<HTMLDivElement>) => void;
   setSelectedSlots: React.Dispatch<React.SetStateAction<Set<string>>>;
-  weekStartDate: string; // ISO: "YYYY-MM-DD" (lundi)
+  weekStartDate: Date; // ISO: "YYYY-MM-DD" (lundi)
 };
 
 const ResizableTable: React.FC<Props> = ({
@@ -149,7 +149,8 @@ const ResizableTable: React.FC<Props> = ({
                     </th>
 
                     {WEEK_DAYS.map((_, dayIndex) => {
-                      const slotId = `${hour}-${minute}-${dayIndex}`;
+                      const weekKey = weekStartDate.toISOString().slice(0, 10);
+                      const slotId = `${weekKey}-${hour}-${minute}-${dayIndex}`;
                       const mergedBlock = slotToMerged.get(slotId);
                       const isStart = startSlotIds.has(slotId);
                       const activityId = slotToActivityMap.get(slotId);

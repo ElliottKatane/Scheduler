@@ -6,10 +6,11 @@ import ScheduleExportPreview from "../components/ScheduleExportPreview";
 import { Activity, SavedSchedule } from "../types";
 import { useSavedSchedules } from "../context/SavedSchedulesContext";
 import Button from "../UI/Button";
+import { addDays, formatDateFR, parseISODate } from "../constants";
 
 interface Props {
   activities: Activity[];
-  onLoad: (map: [string, string][], scheduleId: string, name: string) => void;
+  onLoad: (schedule: SavedSchedule) => void; // <-- NEW
 }
 
 const SavedSchedules: React.FC<Props> = ({ activities, onLoad }) => {
@@ -35,19 +36,19 @@ const SavedSchedules: React.FC<Props> = ({ activities, onLoad }) => {
 
     setTimeout(() => {
       const element = document.getElementById("full-export");
-      if (element) {
-        html2pdf()
-          .from(element)
-          .set({
-            margin: 0,
-            filename: `${s.name}${smart ? "_smart" : ""}.pdf`,
-            image: { type: "jpeg", quality: 0.98 },
-            html2canvas: { scale: 2 },
-            jsPDF: { unit: "mm", format: "a4", orientation: "landscape" },
-          })
-          .save()
-          .then(() => setRenderedExport(null));
-      }
+      if (!element) return;
+
+      html2pdf()
+        .from(element)
+        .set({
+          margin: 0,
+          filename: `${s.name}${smart ? "_smart" : ""}.pdf`,
+          image: { type: "jpeg", quality: 0.98 },
+          html2canvas: { scale: 2 },
+          jsPDF: { unit: "mm", format: "a4", orientation: "landscape" },
+        })
+        .save()
+        .then(() => setRenderedExport(null));
     }, 100);
   };
 
@@ -65,56 +66,87 @@ const SavedSchedules: React.FC<Props> = ({ activities, onLoad }) => {
   };
 
   return (
-    <div className="saved-schedules p-4">
+    <div className="p-4">
       <h3 className="text-xl font-bold mb-4">
         Mes emplois du temps sauvegardés
       </h3>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
         {schedules.map((s) => (
           <div
             key={s.id}
-            className="bg-gray-900 p-4 rounded-lg shadow-lg w-full max-w-[400px] text-center overflow-hidden flex flex-col items-center space-y-4"
+            className="w-full max-w-[420px] mx-auto rounded-2xl bg-gray-900/90 border border-white/10 shadow-lg overflow-hidden"
           >
-            {editingId === s.id ? (
-              <input
-                className="border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-center text-lg font-semibold w-full"
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-                onBlur={() => confirmRename(s.id)}
-                onKeyDown={(e) => e.key === "Enter" && confirmRename(s.id)}
-                autoFocus
-              />
-            ) : (
-              <h4 className="text-lg font-semibold">{s.name}</h4>
-            )}
+            {/* Header */}
+            <div className="p-5 text-center space-y-2">
+              {editingId === s.id ? (
+                <input
+                  className="w-full rounded-md border border-gray-300 dark:border-gray-600 px-2 py-1 text-center text-lg font-semibold bg-white text-gray-900"
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  onBlur={() => confirmRename(s.id)}
+                  onKeyDown={(e) => e.key === "Enter" && confirmRename(s.id)}
+                  autoFocus
+                />
+              ) : (
+                <h4 className="text-lg font-semibold text-white">{s.name}</h4>
+              )}
 
-            <div className="w-full max-w-full overflow-x-auto scale-[0.8] origin-top">
-              <ScheduleSnippet
-                title=""
-                slotToActivityMap={new Map(s.data)}
-                activities={activities}
-                onClick={() => onLoad(s.data, s.id, s.name)}
-                enableMergedView={true}
-              />
+              {s.weekStartDate ? (
+                <p className="text-sm text-gray-300">
+                  {formatDateFR(parseISODate(s.weekStartDate))} –{" "}
+                  {formatDateFR(addDays(parseISODate(s.weekStartDate), 6))}
+                </p>
+              ) : (
+                <p className="text-sm text-gray-400">Semaine non définie</p>
+              )}
             </div>
 
-            <div className="grid grid-cols-2 gap-2 w-full">
-              <Button variant="danger" onClick={() => deleteSchedule(s.id)}>
-                Supprimer
-              </Button>
-              <Button variant="primary" onClick={() => handleExport(s)}>
-                Exporter en PDF
-              </Button>
-              <Button variant="secondary" onClick={() => handleExport(s, true)}>
-                PDF compact
-              </Button>
-              <Button
-                variant="secondary"
-                onClick={() => handleRename(s.id, s.name)}
-              >
-                Renommer
-              </Button>
+            {/* Snippet zone */}
+            <div className="px-5 pb-5">
+              <div className="w-full rounded-2xl bg-gray-950/30 border border-white/10 p-4">
+                <div className="w-full rounded-xl bg-white/5 border border-white/10 p-3">
+                  <div className="w-full flex justify-center">
+                    <div className="w-[240px] sm:w-[260px] md:w-[280px]">
+                      <ScheduleSnippet
+                        title=""
+                        slotToActivityMap={new Map(s.data)}
+                        activities={activities}
+                        onClick={() => onLoad(s)}
+                        enableMergedView
+                        cell={10}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="px-5 pb-5">
+              <div className="grid grid-cols-2 gap-2">
+                <Button variant="danger" onClick={() => deleteSchedule(s.id)}>
+                  Supprimer
+                </Button>
+
+                <Button variant="primary" onClick={() => handleExport(s)}>
+                  Exporter en PDF
+                </Button>
+
+                <Button
+                  variant="secondary"
+                  onClick={() => handleExport(s, true)}
+                >
+                  PDF compact
+                </Button>
+
+                <Button
+                  variant="secondary"
+                  onClick={() => handleRename(s.id, s.name)}
+                >
+                  Renommer
+                </Button>
+              </div>
             </div>
           </div>
         ))}

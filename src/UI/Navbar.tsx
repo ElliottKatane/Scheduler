@@ -1,39 +1,41 @@
 import React, { useState } from "react";
 import { useAuthStatus } from "../hooks/useAuthStatus";
-import AuthModal from "../components/AuthModal"; // ajuste le chemin
+import AuthModal from "../components/AuthModal";
 
 interface NavbarProps {
-  onTabChange?: (tab: string) => void;
+  activeTab: string;
+  onTabChange: (tab: string) => void;
   currentSchedule?: { id: string; name: string } | null;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ onTabChange, currentSchedule }) => {
-  const [activeTab, setActiveTab] = useState("Emploi du temps");
+const TABS = [
+  "Emploi du temps",
+  "Mes emplois du temps",
+  "Gérer les activités",
+  "Livres / Films",
+  "Revenus",
+  "Debug",
+] as const;
 
-  const handleTabClick = (tab: string) => {
-    setActiveTab(tab);
-    onTabChange?.(tab);
-  };
+const Navbar: React.FC<NavbarProps> = ({
+  activeTab,
+  onTabChange,
+  currentSchedule,
+}) => {
+  const { user, isOnlineMode } = useAuthStatus();
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
 
-  const tabs = [
-    "Emploi du temps",
-    "Gérer les activités",
-    "Mes emplois du temps",
-    "Livres / Films",
-    "Debug",
-  ];
   const gitSha = import.meta.env.VITE_GIT_SHA as string | undefined;
   const shortSha = gitSha ? gitSha.slice(0, 7) : "dev";
 
-  const { user, isOnlineMode } = useAuthStatus();
-  const [isAuthOpen, setIsAuthOpen] = useState(false);
   return (
-    <nav className="flex flex-wrap gap-2 p-4 bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200 dark:border-gray-700">
-      {tabs.map((tab) => (
+    <nav className="flex flex-wrap items-center gap-2 p-4 bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200 dark:border-gray-700">
+      {/* Tabs */}
+      {TABS.map((tab) => (
         <button
           key={tab}
-          onClick={() => handleTabClick(tab)}
-          className={`px-4 py-2 rounded-md text-sm font-medium
+          onClick={() => onTabChange(tab)}
+          className={`px-4 py-2 rounded-md text-sm font-medium transition
             ${
               activeTab === tab
                 ? "bg-blue-600 text-white"
@@ -43,17 +45,19 @@ const Navbar: React.FC<NavbarProps> = ({ onTabChange, currentSchedule }) => {
           {tab}
         </button>
       ))}
+
+      {/* Current schedule */}
       {currentSchedule && (
-        <div className="text-sm text-gray-600 dark:text-gray-300 ml-4">
-          <p>
-            <strong>Édition :</strong> {currentSchedule.name}
-          </p>
+        <div className="ml-4 text-sm text-gray-600 dark:text-gray-300">
+          <strong>Édition :</strong> {currentSchedule.name}
         </div>
       )}
-      <div className="flex items-center gap-2">
+
+      {/* Right side */}
+      <div className="ml-auto flex items-center gap-2">
         <span
           className="text-xs font-semibold px-2 py-1 rounded-full border
-               border-gray-300 dark:border-gray-700"
+                     border-gray-300 dark:border-gray-700"
           title={
             isOnlineMode
               ? "Connecté – données synchronisées"
@@ -66,7 +70,7 @@ const Navbar: React.FC<NavbarProps> = ({ onTabChange, currentSchedule }) => {
         <button
           onClick={() => setIsAuthOpen(true)}
           className="rounded-xl border px-3 py-2 text-sm font-semibold
-               hover:bg-gray-50 dark:hover:bg-gray-700"
+                     hover:bg-gray-50 dark:hover:bg-gray-700"
         >
           {user ? (
             <span className="max-w-[140px] truncate inline-block align-middle">
@@ -76,10 +80,11 @@ const Navbar: React.FC<NavbarProps> = ({ onTabChange, currentSchedule }) => {
             "Connexion"
           )}
         </button>
+
+        <span className="text-xs text-gray-400">v{shortSha}</span>
       </div>
 
       <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
-      <span className="text-xs text-gray-400">v{shortSha}</span>
     </nav>
   );
 };

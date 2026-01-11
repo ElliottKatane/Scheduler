@@ -80,7 +80,6 @@ export const SavedSchedulesProvider = ({
       return;
     }
 
-    // Même si vide: on marque migré pour éviter de boucler
     if (!localSchedules.length) {
       localStorage.setItem(migratedKey, "1");
       return;
@@ -92,8 +91,9 @@ export const SavedSchedulesProvider = ({
           doc(db, "users", uid, "schedules", s.id),
           {
             name: s.name ?? "Sans titre",
-            // IMPORTANT: on écrit en OBJET, pas en tableau de tableaux
             slotToActivityMap: Object.fromEntries(s.data ?? []),
+            // NEW: on migre aussi weekStartDate si présent
+            ...(s.weekStartDate ? { weekStartDate: s.weekStartDate } : {}),
             updatedAt: serverTimestamp(),
           },
           { merge: true }
@@ -139,6 +139,11 @@ export const SavedSchedulesProvider = ({
           id: d.id,
           name: data.name ?? "Sans titre",
           data: objectToEntries(slotObj),
+          // NEW: champ optionnel (anciens docs => undefined)
+          weekStartDate:
+            typeof data.weekStartDate === "string"
+              ? data.weekStartDate
+              : undefined,
         };
       });
 
@@ -169,6 +174,10 @@ export const SavedSchedulesProvider = ({
         {
           name: schedule.name ?? "Sans titre",
           slotToActivityMap: Object.fromEntries(schedule.data ?? []),
+          // NEW
+          ...(schedule.weekStartDate
+            ? { weekStartDate: schedule.weekStartDate }
+            : {}),
           updatedAt: serverTimestamp(),
         },
         { merge: true }
@@ -187,7 +196,6 @@ export const SavedSchedulesProvider = ({
 
     try {
       await deleteDoc(doc(db, "users", uid, "schedules", id));
-      // pas besoin de setSchedules ici: le snapshot va refresh
     } catch (e) {
       console.error("Firestore deleteSchedule", e);
       throw e;
@@ -195,17 +203,15 @@ export const SavedSchedulesProvider = ({
   };
 
   const updateSchedule = async (id: string, map: Map<string, string>) => {
-    // UI locale: OK (entries = array of tuples)
+    // UI locale
     setSchedules((prev) =>
       prev.map((s) =>
         s.id === id ? { ...s, data: Array.from(map.entries()) } : s
       )
     );
 
-    // invité => rien à pousser en cloud
     if (!uid) return;
 
-    // Firestore: IMPORTANT = objet plat, pas un tableau d'entries
     await updateDoc(doc(db, "users", uid, "schedules", id), {
       slotToActivityMap: Object.fromEntries(map),
       updatedAt: serverTimestamp(),
@@ -216,7 +222,6 @@ export const SavedSchedulesProvider = ({
     id: string,
     newName: string
   ): Promise<void> => {
-    // Local update
     setSchedules((prev) =>
       prev.map((s) => (s.id === id ? { ...s, name: newName } : s))
     );

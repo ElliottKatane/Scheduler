@@ -18,7 +18,10 @@ export function mergeTimeSlots(
 ): MergedSlot[] {
   const entries = Array.from(slotToActivityMap.entries())
     .map(([slotId, activityId]) => {
-      const [hourStr, minuteStr, dayStr] = slotId.split("-");
+      const parts = slotId.split("-");
+      const hourStr = parts[parts.length - 3];
+      const minuteStr = parts[parts.length - 2];
+      const dayStr = parts[parts.length - 1];
       const hour = parseInt(hourStr, 10);
       const minute = parseInt(minuteStr, 10);
       const dayIndex = parseInt(dayStr, 10);
@@ -31,10 +34,9 @@ export function mergeTimeSlots(
         day: WEEK_DAYS[dayIndex],
       };
     })
-    .sort((a, b) =>
-      a.dayIndex - b.dayIndex ||
-      a.hour - b.hour ||
-      a.minute - b.minute
+    .sort(
+      (a, b) =>
+        a.dayIndex - b.dayIndex || a.hour - b.hour || a.minute - b.minute
     );
 
   const merged: MergedSlot[] = [];

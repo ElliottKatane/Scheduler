@@ -57,10 +57,22 @@ export const formatDateFR = (date: Date): string => {
   return `${dd}/${mm}/${yyyy}`;
 };
 
-// Les 7 dates (JJ/MM/AAAA) d’une semaine à partir du lundi ISO
-export const getWeekDates = (weekStartISO: string): string[] => {
-  const monday = parseISODate(weekStartISO);
-  return Array.from({ length: 7 }, (_, i) => formatDateFR(addDays(monday, i)));
+export const getWeekDates = (weekStart: Date): string[] => {
+  const dates: string[] = [];
+
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(weekStart);
+    d.setDate(d.getDate() + i);
+
+    dates.push(
+      d.toLocaleDateString("fr-CA", {
+        day: "2-digit",
+        month: "2-digit",
+      })
+    );
+  }
+
+  return dates;
 };
 
 // Naviguer de semaine en semaine
@@ -84,12 +96,29 @@ export const formatISO = (date: Date): string => {
 export const isWeekInRange = (weekStartISO: string): boolean => {
   return weekStartISO >= CALENDAR_START && weekStartISO <= CALENDAR_END;
 };
-export function getCurrentWeekMonday(): string {
+export function getCurrentWeekMonday(): Date {
   const today = new Date();
   const day = today.getDay(); // 0 = dimanche, 1 = lundi, ...
   const diff = day === 0 ? -6 : 1 - day; // dimanche → lundi précédent
+
   const monday = new Date(today);
+  monday.setHours(0, 0, 0, 0); // normalisation (important)
   monday.setDate(today.getDate() + diff);
 
-  return monday.toISOString().slice(0, 10); // YYYY-MM-DD
+  return monday;
 }
+
+export const formatWeekLabel = (date: Date) => {
+  const end = addDays(date, 6);
+  return `${date.toLocaleDateString("fr-CA")} → ${end.toLocaleDateString(
+    "fr-CA"
+  )}`;
+};
+export const toMonday = (date: Date) => {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() + diff);
+  return d;
+};
