@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useSavedSchedules } from "../context/SavedSchedulesContext";
 import { useCurrentSchedule } from "../context/CurrentScheduleContext";
 import { toast } from "sonner";
-import { formatISO, toMonday } from "../constants";
+import { formatISO, parseISODate, toMonday } from "../constants";
 
 interface Props {
   slotToActivityMap: Map<string, string>;
@@ -14,6 +14,7 @@ interface Props {
   setConflictingSlots: (slots: string[]) => void;
   setHasConflicts: (has: boolean) => void;
   weekStartDate: Date;
+  setWeekStartDate: React.Dispatch<React.SetStateAction<Date>>;
 }
 
 const ScheduleActions: React.FC<Props> = ({
@@ -25,6 +26,7 @@ const ScheduleActions: React.FC<Props> = ({
   setConflictingSlots,
   setHasConflicts,
   weekStartDate,
+  setWeekStartDate,
 }) => {
   const { schedules, addSchedule, updateSchedule } = useSavedSchedules();
   const { currentSchedule, setCurrentSchedule, markSaved, hasChanges } =
@@ -34,10 +36,15 @@ const ScheduleActions: React.FC<Props> = ({
     formatISO(weekStartDate)
   );
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const takenWeeks = new Set(schedules.map((s) => s.weekStartDate));
-  const selectedWeekKey = formatISO(toMonday(new Date(saveWeekISO)));
-  const isTaken = takenWeeks.has(selectedWeekKey);
-  // 🔹 garder l’input date aligné avec la semaine affichée
+  const weekKey = formatISO(toMonday(parseISODate(saveWeekISO)));
+  const existingSchedule = schedules.find((s) => s.weekStartDate === weekKey);
+  const isTaken = !!existingSchedule;
+
+  // utile pour décider si on doit afficher "Charger l’EDT"
+  const isSameAsCurrent =
+    !!existingSchedule && currentSchedule?.id === existingSchedule.id;
+
+  !currentSchedule || currentSchedule.weekStartDate !== weekKey; // 🔹 garder l’input date aligné avec la semaine affichée
   useEffect(() => {
     setSaveWeekISO(formatISO(weekStartDate));
   }, [weekStartDate]);
@@ -68,12 +75,7 @@ const ScheduleActions: React.FC<Props> = ({
     const name = prompt("Nom de l'emploi du temps :");
     if (!name?.trim()) return;
 
-    const parsed = new Date(saveWeekISO);
-    if (isNaN(parsed.getTime())) {
-      toast.error("Date invalide");
-      return;
-    }
-
+    const parsed = parseISODate(saveWeekISO); // ✅ pas de timezone surprise
     const targetWeek = toMonday(parsed);
     const weekKey = formatISO(targetWeek);
 
@@ -120,7 +122,6 @@ const ScheduleActions: React.FC<Props> = ({
     resetUIState();
     toast.info("Nouveau planning prêt");
   };
-
   return (
     <div className="rounded-xl border border-gray-300 bg-white dark:bg-gray-800 p-4 shadow-sm space-y-4">
       <h2 className="text-lg font-semibold">Actions sur l'emploi du temps</h2>
@@ -136,9 +137,39 @@ const ScheduleActions: React.FC<Props> = ({
           className="rounded-md border px-2 py-1 text-sm bg-white dark:bg-gray-900"
         />
         {isTaken && (
-          <p className="text-xs text-red-400">
-            Cette semaine a déjà un emploi du temps sauvegardé.
-          </p>
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-xs text-red-400">
+              Cette semaine a déjà un emploi du temps sauvegardé.
+            </p>
+
+            {isTaken && !isSameAsCurrent && (
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs text-red-400">
+                  Cette semaine a déjà un emploi du temps sauvegardé.
+                </p>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const map = new Map(existingSchedule!.data);
+                    setCurrentSchedule(existingSchedule!);
+                    setSlotToActivityMap(map);
+                    markSaved(map);
+                    if (existingSchedule!.weekStartDate) {
+                      setWeekStartDate(
+                        parseISODate(existingSchedule!.weekStartDate)
+                      );
+                    }
+
+                    toast.info("Emploi du temps chargé");
+                  }}
+                  className="text-xs underline text-blue-400 hover:text-blue-300"
+                >
+                  Charger l’EDT
+                </button>
+              </div>
+            )}
+          </div>
         )}
       </div>
 

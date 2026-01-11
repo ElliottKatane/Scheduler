@@ -122,3 +122,15 @@ export const toMonday = (date: Date) => {
   d.setDate(d.getDate() + diff);
   return d;
 };
+export const getWeeksOfMonth = (year: number, month: number) => {
+  const weeks: string[] = [];
+  const firstDay = new Date(year, month, 1);
+  let current = toMonday(firstDay);
+
+  while (current.getMonth() <= month) {
+    weeks.push(formatISO(current));
+    current = addDays(current, 7);
+  }
+
+  return weeks;
+};

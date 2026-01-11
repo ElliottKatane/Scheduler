@@ -289,6 +289,7 @@ function App() {
                   setConflictingSlots={setConflictingSlots}
                   setHasConflicts={setHasConflicts}
                   weekStartDate={weekStartDate}
+                  setWeekStartDate={setWeekStartDate}
                 />
 
                 <button
@@ -389,8 +390,8 @@ function App() {
               markSaved(asMap);
               setCurrentSchedule(schedule);
               setSlotToActivityMap(asMap);
+
               if (schedule.weekStartDate) {
-                // permet d'afficher la bonne semaine au onLoad dans "EDT"
                 setWeekStartDate(parseISODate(schedule.weekStartDate));
               }
 
@@ -398,10 +399,23 @@ function App() {
               setPendingAssignment(null);
               setConflictingSlots([]);
               setHasConflicts(false);
+
               setActiveTab("Emploi du temps");
+            }}
+            onCreateAtWeek={(weekStartISO) => {
+              setActiveTab("Emploi du temps");
+              setWeekStartDate(parseISODate(weekStartISO));
+              setCurrentSchedule(null);
+              setSlotToActivityMap(new Map());
+              clearSelection();
+              setSelectedActivityId("");
+              setPendingAssignment(null);
+              setConflictingSlots([]);
+              setHasConflicts(false);
             }}
           />
         )}
+
         {activeTab === "Livres / Films" && <BooksAndMovies />}
 
         {activeTab === "Debug" && <LocalStorageViewer />}
